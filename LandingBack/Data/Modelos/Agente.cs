@@ -43,6 +43,7 @@ namespace LandingBack.Data.Modelos
         public DateTime? BloqueoHasta { get; set; }
 
         public ICollection<Visita> Visitas { get; set; } = new List<Visita>();
+        public ICollection<Lead> Leads { get; set; } = new List<Lead>();
         public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
     }
 }

@@ -14,6 +14,8 @@ namespace LandingBack.Data
         public DbSet<Lead> Leads => Set<Lead>();
         public DbSet<Visita> Visitas => Set<Visita>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+        public DbSet<VisitaAuditLog> VisitaAuditLogs => Set<VisitaAuditLog>();
+        public DbSet<SavedSearch> SavedSearches => Set<SavedSearch>();
 
         protected override void OnModelCreating(ModelBuilder mb)
         {

@@ -9,7 +9,7 @@ namespace LandingBack.Data.Modelos
         public string Campo { get; set; } = null!;
         public string? ValorAnterior { get; set; }
         public string? ValorNuevo { get; set; }
-        public Guid? UsuarioId { get; set; }
+        public int? UsuarioId { get; set; }
         public DateTime FechaUtc { get; set; } = DateTime.UtcNow;
         public Propiedad Propiedad { get; set; } = null!;
     }

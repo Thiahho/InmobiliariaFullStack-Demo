@@ -88,4 +88,15 @@ namespace LandingBack.Data.Dtos
         public string Key { get; set; } = null!;
         public Dictionary<string, string> Fields { get; set; } = new();
     }
+
+    public class BulkMediaUploadDto
+    {
+        [Required]
+        public int PropiedadId { get; set; }
+        
+        [Required]
+        public List<IFormFile> Files { get; set; } = new();
+        
+        public string? TituloBase { get; set; }
+    }
 }

@@ -6,6 +6,9 @@ namespace LandingBack.Data.Dtos
     public class PropiedadCreateDto
     {
         [Required]
+        public int Id {get;set;}
+        
+        [Required]
         [MaxLength(20)]
         public string Codigo { get; set; } = null!;
         
@@ -71,14 +74,14 @@ namespace LandingBack.Data.Dtos
         public Dictionary<string, object>? Amenities { get; set; }
         
         [MaxLength(20)]
-        public string Estado { get; set; } = "Activa";
+        public string Estado { get; set; } = "Activo";
         
         public bool Destacado { get; set; } = false;
     }
 
     public class PropiedadUpdateDto : PropiedadCreateDto
     {
-        public int Id { get; set; }
+        // El Id ya está heredado de PropiedadCreateDto
     }
 
     public class PropiedadResponseDto

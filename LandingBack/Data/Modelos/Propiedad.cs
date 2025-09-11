@@ -27,7 +27,7 @@ namespace LandingBack.Data.Modelos
         public int? Piso { get; set; }
         public bool? AptoCredito { get; set; }
         public JsonDocument? Amenities { get; set; }     // jsonb
-        public string Estado { get; set; } = "Activa";   // Activa|Reservada|Vendida|Pausada
+        public string Estado { get; set; } = "Activo";   // Activa|Reservada|Vendida|Pausada
         public bool Destacado { get; set; } = false;
         public DateTime FechaPublicacionUtc { get; set; } = DateTime.UtcNow;
 

@@ -1,13 +1,12 @@
 using LandingBack.Data;
 using LandingBack.Services;
 using LandingBack.Services.Interfaces;
+using LandingBack.Mappings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Text;
-using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +25,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add AutoMapper
+builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -68,29 +70,20 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireCargadorRole", policy => policy.RequireRole("Admin", "Agente", "Cargador"));
 });
 
-// Add Rate Limiting
-builder.Services.AddRateLimiter(options =>
-{
-    options.AddFixedWindowLimiter("LoginPolicy", configure =>
-    {
-        configure.PermitLimit = 5;
-        configure.Window = TimeSpan.FromMinutes(15);
-        configure.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        configure.QueueLimit = 0;
-    });
-    
-    options.AddFixedWindowLimiter("ApiPolicy", configure =>
-    {
-        configure.PermitLimit = 100;
-        configure.Window = TimeSpan.FromMinutes(1);
-        configure.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        configure.QueueLimit = 0;
-    });
-});
+// Rate limiting will be added in a future version
 
 // Register services
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPropiedadesService, PropiedadesService>();
+builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
+builder.Services.AddScoped<IGeoService, GeoService>();
+builder.Services.AddScoped<IMediaService, MediaService>();
+builder.Services.AddScoped<ILeadService, LeadService>();
+builder.Services.AddScoped<IVisitaService, VisitaService>();
+builder.Services.AddScoped<IVisitaAuditoriaService, VisitaAuditoriaService>();
+builder.Services.AddScoped<IAdvancedSearchService, AdvancedSearchService>();
+builder.Services.AddScoped<IImageProcessingService, ImageProcessingService>();
 
 // Add Health Checks
 builder.Services.AddHealthChecks()
@@ -115,7 +108,6 @@ app.UseStaticFiles();
 
 app.UseCors("AllowAll");
 
-app.UseRateLimiter();
 
 app.UseSerilogRequestLogging();
 

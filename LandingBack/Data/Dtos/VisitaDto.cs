@@ -87,5 +87,73 @@ namespace LandingBack.Data.Dtos
     {
         public TimeSpan Inicio { get; set; }
         public TimeSpan Fin { get; set; }
+        public bool Disponible { get; set; } = true;
+        public string? Motivo { get; set; }
+    }
+
+    public class VisitaCalendarDto
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = null!;
+        public DateTime Start { get; set; }
+        public DateTime End { get; set; }
+        public string Color { get; set; } = "#007bff";
+        public string Estado { get; set; } = null!;
+        public string? Description { get; set; }
+    }
+
+    public class BulkVisitaActionDto
+    {
+        [Required]
+        public List<int> VisitaIds { get; set; } = new();
+        
+        [Required]
+        [MaxLength(20)]
+        public string Accion { get; set; } = null!; // Confirmar|Cancelar|Reagendar
+        
+        public DateTime? NuevaFecha { get; set; }
+        public string? Motivo { get; set; }
+    }
+
+    public class VisitaStatsDto
+    {
+        public int TotalVisitas { get; set; }
+        public int VisitasPendientes { get; set; }
+        public int VisitasConfirmadas { get; set; }
+        public int VisitasRealizadas { get; set; }
+        public int VisitasCanceladas { get; set; }
+        public double TasaRealizacion { get; set; }
+        public Dictionary<string, int> VisitasPorAgente { get; set; } = new();
+        public List<VisitasByDateDto> VisitasPorFecha { get; set; } = new();
+    }
+
+    public class VisitasByDateDto
+    {
+        public DateTime Fecha { get; set; }
+        public int Cantidad { get; set; }
+    }
+
+    public class ConflictCheckDto
+    {
+        [Required]
+        public int AgenteId { get; set; }
+        
+        [Required]
+        public DateTime FechaHora { get; set; }
+        
+        [Required]
+        [Range(15, 480)]
+        public int DuracionMinutos { get; set; }
+        
+        public int? VisitaIdExcluir { get; set; }
+    }
+
+    public class NotificationDto
+    {
+        public string Tipo { get; set; } = null!; // Email|SMS|Push
+        public string Destinatario { get; set; } = null!;
+        public string Asunto { get; set; } = null!;
+        public string Mensaje { get; set; } = null!;
+        public DateTime? FechaEnvio { get; set; }
     }
 }

@@ -15,12 +15,16 @@ namespace LandingBack.Services
         private readonly AppDbContext _appDbContext;
         private readonly IMapper _mapper;
         private readonly ILogger<PropiedadesService> _logger;
+        private readonly IAuditoriaService _auditoriaService;
+        private readonly IGeoService _geoService;
 
-        public PropiedadesService(AppDbContext appDbContext, IMapper mapper, ILogger<PropiedadesService> logger)
+        public PropiedadesService(AppDbContext appDbContext, IMapper mapper, ILogger<PropiedadesService> logger, IAuditoriaService auditoriaService, IGeoService geoService)
         {
             _appDbContext=appDbContext;
             _logger = logger;
             _mapper=mapper;
+            _auditoriaService = auditoriaService;
+            _geoService = geoService;
         }
 
         public async Task<PropiedadCreateDto> CreatePropiedadAsync(PropiedadCreateDto propiedadCreateDto)
@@ -46,10 +50,15 @@ namespace LandingBack.Services
 
                 var entidad = _mapper.Map<Propiedad>(propiedadCreateDto);
                 entidad.FechaPublicacionUtc = DateTime.UtcNow;
+                entidad.Geo = _geoService.CreatePoint(propiedadCreateDto.Latitud, propiedadCreateDto.Longitud);
 
                 _appDbContext.Propiedades.Add(entidad);
                 await _appDbContext.SaveChangesAsync();
-                return _mapper.Map<PropiedadCreateDto>(entidad);
+                var dto = _mapper.Map<PropiedadCreateDto>(entidad);
+                var coords = _geoService.GetCoordinates(entidad.Geo);
+                dto.Latitud = coords.Latitud;
+                dto.Longitud = coords.Longitud;
+                return dto;
 
 
             }
@@ -91,7 +100,20 @@ namespace LandingBack.Services
                 .ToListAsync();
 
             var propiedadesDto = _mapper.Map<List<PropiedadResponseDto>>(propiedad);
-           return propiedadesDto;
+            
+            // Mapear coordenadas manualmente
+            foreach (var dto in propiedadesDto)
+            {
+                var prop = propiedad.FirstOrDefault(p => p.Id == dto.Id);
+                if (prop != null)
+                {
+                    var coords = _geoService.GetCoordinates(prop.Geo);
+                    dto.Latitud = coords.Latitud;
+                    dto.Longitud = coords.Longitud;
+                }
+            }
+            
+            return propiedadesDto;
         }
 
         public async Task<PropiedadResponseDto> GetPropiedadByIdAsync(int id)
@@ -105,7 +127,11 @@ namespace LandingBack.Services
                 if (propiedad == null)
                     throw new ArgumentException($"No existe la propiedad con ID: {id}");
 
-                return _mapper.Map<PropiedadResponseDto>(propiedad);
+                var dto = _mapper.Map<PropiedadResponseDto>(propiedad);
+                var coords = _geoService.GetCoordinates(propiedad.Geo);
+                dto.Latitud = coords.Latitud;
+                dto.Longitud = coords.Longitud;
+                return dto;
             }
             catch (Exception ex)
             {
@@ -189,23 +215,105 @@ namespace LandingBack.Services
             }
         }
 
-        public async Task UpdatePropiedadAsync(PropiedadUpdateDto propiedadUpdateDto)
+        public async Task UpdatePropiedadAsync(PropiedadUpdateDto propiedadUpdateDto, int? usuarioId = null)
         {
             try
             {
-                var entidad = await _appDbContext.Propiedades
+                var entidadAnterior = await _appDbContext.Propiedades
+                    .AsNoTracking()
                     .FirstOrDefaultAsync(p => p.Id == propiedadUpdateDto.Id);
 
-                if (entidad == null)
+                if (entidadAnterior == null)
                     throw new ArgumentException($"No existe la propiedad con ID: {propiedadUpdateDto.Id}");
 
-                _mapper.Map(propiedadUpdateDto, entidad);
-                _appDbContext.Propiedades.Update(entidad);
+                var entidadNueva = await _appDbContext.Propiedades
+                    .FirstOrDefaultAsync(p => p.Id == propiedadUpdateDto.Id);
+
+                if (entidadNueva == null)
+                    throw new ArgumentException($"No existe la propiedad con ID: {propiedadUpdateDto.Id}");
+
+                _mapper.Map(propiedadUpdateDto, entidadNueva);
+                entidadNueva.Geo = _geoService.CreatePoint(propiedadUpdateDto.Latitud, propiedadUpdateDto.Longitud);
+
+                // Registrar cambios antes de guardar
+                await _auditoriaService.RegistrarCambiosPropiedadAsync(entidadAnterior, entidadNueva, usuarioId);
+
+                _appDbContext.Propiedades.Update(entidadNueva);
                 await _appDbContext.SaveChangesAsync();
             }
             catch (Exception ex)
             {
                 throw new InvalidOperationException($"Error al actualizar la propiedad: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<(IEnumerable<PropiedadResponseDto> Propiedades, int TotalCount)> SearchPropiedadesAsync(PropiedadSearchDto searchDto)
+        {
+            try
+            {
+                var query = _appDbContext.Propiedades
+                    .Include(p => p.Medias)
+                    .AsQueryable();
+
+                // Filtros
+                if (!string.IsNullOrEmpty(searchDto.Operacion))
+                    query = query.Where(p => p.Operacion == searchDto.Operacion);
+
+                if (!string.IsNullOrEmpty(searchDto.Tipo))
+                    query = query.Where(p => p.Tipo == searchDto.Tipo);
+
+                if (!string.IsNullOrEmpty(searchDto.Barrio))
+                    query = query.Where(p => p.Barrio.Contains(searchDto.Barrio));
+
+                if (!string.IsNullOrEmpty(searchDto.Comuna))
+                    query = query.Where(p => p.Comuna.Contains(searchDto.Comuna));
+
+                if (searchDto.PrecioMin.HasValue)
+                    query = query.Where(p => p.Precio >= searchDto.PrecioMin.Value);
+
+                if (searchDto.PrecioMax.HasValue)
+                    query = query.Where(p => p.Precio <= searchDto.PrecioMax.Value);
+
+                if (searchDto.Ambientes.HasValue)
+                    query = query.Where(p => p.Ambientes == searchDto.Ambientes.Value);
+
+                if (searchDto.Dormitorios.HasValue)
+                    query = query.Where(p => p.Dormitorios >= searchDto.Dormitorios.Value);
+
+                if (searchDto.Cochera.HasValue)
+                    query = query.Where(p => p.Cochera == searchDto.Cochera.Value);
+
+                if (!string.IsNullOrEmpty(searchDto.Estado))
+                    query = query.Where(p => p.Estado == searchDto.Estado);
+
+                if (searchDto.Destacado.HasValue)
+                    query = query.Where(p => p.Destacado == searchDto.Destacado.Value);
+
+                // Ordenamiento
+                query = searchDto.OrderBy?.ToLower() switch
+                {
+                    "precio" => searchDto.OrderDesc ? query.OrderByDescending(p => p.Precio) : query.OrderBy(p => p.Precio),
+                    "fechapublicacionutc" => searchDto.OrderDesc ? query.OrderByDescending(p => p.FechaPublicacionUtc) : query.OrderBy(p => p.FechaPublicacionUtc),
+                    "destacado" => searchDto.OrderDesc ? query.OrderByDescending(p => p.Destacado).ThenByDescending(p => p.FechaPublicacionUtc) : query.OrderBy(p => p.Destacado).ThenBy(p => p.FechaPublicacionUtc),
+                    _ => searchDto.OrderDesc ? query.OrderByDescending(p => p.FechaPublicacionUtc) : query.OrderBy(p => p.FechaPublicacionUtc)
+                };
+
+                // Conteo total antes de paginación
+                var totalCount = await query.CountAsync();
+
+                // Paginación
+                var propiedades = await query
+                    .Skip((searchDto.Page - 1) * searchDto.PageSize)
+                    .Take(searchDto.PageSize)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                var propiedadesDto = _mapper.Map<List<PropiedadResponseDto>>(propiedades);
+                return (propiedadesDto, totalCount);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error al buscar propiedades: {ex.Message}", ex);
             }
         }
     }
