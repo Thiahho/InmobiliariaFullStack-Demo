@@ -81,24 +81,51 @@ namespace LandingBack.Controllers
             return Ok(new { message = "Logout exitoso" });
         }
 
+        [HttpPost("create-admin")]
+        public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto createAdminDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var existingAdmin = await _authService.GetAdminExistsAsync();
+            if (existingAdmin)
+                return BadRequest(new { message = "Ya existe un usuario administrador" });
+
+            var result = await _authService.CreateAdminAsync(createAdminDto);
+            if (!result)
+                return BadRequest(new { message = "Error al crear el administrador" });
+
+            return Ok(new { message = "Administrador creado exitosamente" });
+        }
+
         [HttpGet("me")]
         [Authorize]
         public IActionResult GetCurrentUser()
         {
-            var agenteId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var nombre = User.FindFirst(ClaimTypes.Name)?.Value;
-            var email = User.FindFirst(ClaimTypes.Email)?.Value;
-            var rol = User.FindFirst(ClaimTypes.Role)?.Value;
-            var activo = User.FindFirst("activo")?.Value;
-
-            return Ok(new
+            try
             {
-                id = agenteId,
-                nombre,
-                email,
-                rol,
-                activo = bool.Parse(activo ?? "false")
-            });
+                var agenteId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var nombre = User.FindFirst(ClaimTypes.Name)?.Value;
+                var email = User.FindFirst(ClaimTypes.Email)?.Value;
+                var rol = User.FindFirst(ClaimTypes.Role)?.Value;
+                var activo = User.FindFirst("activo")?.Value;
+                var telefono = User.FindFirst("telefono")?.Value;
+
+                return Ok(new
+                {
+                    id = agenteId,
+                    nombre = nombre ?? "Admin",
+                    email = email ?? "admin@inmobiliaria.com",
+                    rol = rol ?? "Admin",
+                    activo = bool.Parse(activo ?? "true"),
+                    telefono = telefono
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener información del usuario actual");
+                return StatusCode(500, new { message = "Error interno del servidor" });
+            }
         }
     }
 }

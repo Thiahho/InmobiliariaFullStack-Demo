@@ -275,7 +275,7 @@ namespace LandingBack.Controllers
 
         // GET: api/propiedades/autocomplete
         [HttpGet("autocomplete")]
-        public async Task<ActionResult<IEnumerable<AutocompleteResultDto>>> Autocomplete([FromQuery] AutocompleteDto autocompleteDto)
+        public async Task<ActionResult<IEnumerable<AutocompleteResultDto>>> Autocomplete([FromQuery] AutocompleteRequestDto autocompleteDto)
         {
             try
             {

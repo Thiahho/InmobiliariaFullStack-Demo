@@ -176,6 +176,46 @@ namespace LandingBack.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<bool> CreateAdminAsync(CreateAdminDto createAdminDto)
+        {
+            try
+            {
+                var adminExists = await GetAdminExistsAsync();
+                if (adminExists)
+                    return false;
+
+                var hashedPassword = BCrypt.Net.BCrypt.HashPassword(createAdminDto.Password);
+
+                var admin = new Agente
+                {
+                    Nombre = createAdminDto.Nombre,
+                    Email = createAdminDto.Email,
+                    Password = hashedPassword,
+                    Telefono = createAdminDto.Telefono,
+                    Rol = "Admin",
+                    Activo = true,
+                    FechaCreacion = DateTime.UtcNow,
+                    FechaActualizacion = DateTime.UtcNow
+                };
+
+                _context.Agentes.Add(admin);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Administrador creado exitosamente: {createAdminDto.Email}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear administrador");
+                return false;
+            }
+        }
+
+        public async Task<bool> GetAdminExistsAsync()
+        {
+            return await _context.Agentes.AnyAsync(a => a.Rol == "Admin");
+        }
+
         private async Task LogSuccessfulLogin(int agenteId, string ipAddress, string userAgent)
         {
             var auditLog = new AuditLog

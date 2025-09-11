@@ -1,0 +1,54 @@
+import axios from "axios";
+
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5174/api";
+
+export const axiosClient = axios.create({
+  baseURL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Interceptor para agregar JWT token
+axiosClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("access_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Interceptor para manejar refresh token
+axiosClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshToken = localStorage.getItem("refresh_token");
+        if (refreshToken) {
+          const response = await axios.post(`${baseURL}/auth/refresh-token`, {
+            refreshToken,
+            accessToken: localStorage.getItem("access_token"),
+          });
+
+          const { AccessToken, RefreshToken } = response.data;
+          localStorage.setItem("access_token", AccessToken);
+          localStorage.setItem("refresh_token", RefreshToken);
+
+          originalRequest.headers.Authorization = `Bearer ${AccessToken}`;
+          return axiosClient(originalRequest);
+        }
+      } catch (refreshError) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        window.location.href = "/";
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);

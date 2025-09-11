@@ -109,8 +109,7 @@ namespace LandingBack.Services
             using var originalImage = await Image.LoadAsync(stream);
             
             // Crear thumbnail
-            var thumbnailImage = originalImage.Clone();
-            thumbnailImage.Mutate(x => x.Resize(thumbnailSize, thumbnailSize));
+            var thumbnailImage = originalImage.Clone(ctx => ctx.Resize(thumbnailSize, thumbnailSize));
             
             using var thumbnailStream = new MemoryStream();
             var thumbnailEncoder = new WebpEncoder
@@ -157,8 +156,8 @@ namespace LandingBack.Services
             try
             {
                 using var stream = file.OpenReadStream();
-                using var image = Image.Identify(stream);
-                return image != null;
+                var imageInfo = Image.Identify(stream);
+                return imageInfo != null;
             }
             catch
             {

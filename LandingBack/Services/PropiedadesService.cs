@@ -50,14 +50,16 @@ namespace LandingBack.Services
 
                 var entidad = _mapper.Map<Propiedad>(propiedadCreateDto);
                 entidad.FechaPublicacionUtc = DateTime.UtcNow;
-                entidad.Geo = _geoService.CreatePoint(propiedadCreateDto.Latitud, propiedadCreateDto.Longitud);
+                // entidad.Geo = _geoService.CreatePoint(propiedadCreateDto.Latitud, propiedadCreateDto.Longitud);
+                entidad.GeoLatitud = propiedadCreateDto.Latitud;
+                entidad.GeoLongitud = propiedadCreateDto.Longitud;
 
                 _appDbContext.Propiedades.Add(entidad);
                 await _appDbContext.SaveChangesAsync();
                 var dto = _mapper.Map<PropiedadCreateDto>(entidad);
-                var coords = _geoService.GetCoordinates(entidad.Geo);
-                dto.Latitud = coords.Latitud;
-                dto.Longitud = coords.Longitud;
+                // var coords = _geoService.GetCoordinates(entidad.Geo);
+                dto.Latitud = entidad.GeoLatitud;
+                dto.Longitud = entidad.GeoLongitud;
                 return dto;
 
 
@@ -107,7 +109,8 @@ namespace LandingBack.Services
                 var prop = propiedad.FirstOrDefault(p => p.Id == dto.Id);
                 if (prop != null)
                 {
-                    var coords = _geoService.GetCoordinates(prop.Geo);
+                    // var coords = _geoService.GetCoordinates(prop.Geo);
+                    var coords = (Latitud: prop.GeoLatitud, Longitud: prop.GeoLongitud);
                     dto.Latitud = coords.Latitud;
                     dto.Longitud = coords.Longitud;
                 }
@@ -128,7 +131,8 @@ namespace LandingBack.Services
                     throw new ArgumentException($"No existe la propiedad con ID: {id}");
 
                 var dto = _mapper.Map<PropiedadResponseDto>(propiedad);
-                var coords = _geoService.GetCoordinates(propiedad.Geo);
+                // var coords = _geoService.GetCoordinates(propiedad.Geo);
+                var coords = (Latitud: propiedad.GeoLatitud, Longitud: propiedad.GeoLongitud);
                 dto.Latitud = coords.Latitud;
                 dto.Longitud = coords.Longitud;
                 return dto;
@@ -233,7 +237,9 @@ namespace LandingBack.Services
                     throw new ArgumentException($"No existe la propiedad con ID: {propiedadUpdateDto.Id}");
 
                 _mapper.Map(propiedadUpdateDto, entidadNueva);
-                entidadNueva.Geo = _geoService.CreatePoint(propiedadUpdateDto.Latitud, propiedadUpdateDto.Longitud);
+                // entidadNueva.Geo = _geoService.CreatePoint(propiedadUpdateDto.Latitud, propiedadUpdateDto.Longitud);
+                entidadNueva.GeoLatitud = propiedadUpdateDto.Latitud;
+                entidadNueva.GeoLongitud = propiedadUpdateDto.Longitud;
 
                 // Registrar cambios antes de guardar
                 await _auditoriaService.RegistrarCambiosPropiedadAsync(entidadAnterior, entidadNueva, usuarioId);

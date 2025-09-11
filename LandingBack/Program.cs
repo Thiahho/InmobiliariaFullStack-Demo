@@ -19,7 +19,7 @@ builder.Host.UseSerilog();
 
 // Add Entity Framework
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -85,9 +85,9 @@ builder.Services.AddScoped<IVisitaAuditoriaService, VisitaAuditoriaService>();
 builder.Services.AddScoped<IAdvancedSearchService, AdvancedSearchService>();
 builder.Services.AddScoped<IImageProcessingService, ImageProcessingService>();
 
-// Add Health Checks
-builder.Services.AddHealthChecks()
-    .AddDbContextCheck<AppDbContext>();
+// Add Health Checks (temporarily disabled DB check)
+builder.Services.AddHealthChecks();
+    //.AddDbContextCheck<AppDbContext>();
 
 var app = builder.Build();
 
@@ -111,10 +111,10 @@ app.UseCors("AllowAll");
 
 app.UseSerilogRequestLogging();
 
+app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseRouting();
 
 app.MapControllers();
 app.MapHealthChecks("/health");

@@ -111,6 +111,27 @@ namespace LandingBack.Data.Dtos
         public string Estado { get; set; } = null!;
         public bool Destacado { get; set; }
         public DateTime FechaPublicacionUtc { get; set; }
+        
+        // Propiedades adicionales para búsqueda avanzada
+        public string? Titulo { get; set; }
+        public string? Descripcion { get; set; }
+        public string? Localidad { get; set; }
+        public string? Provincia { get; set; }
+        public string? CodigoPostal { get; set; }
+        public string? Orientacion { get; set; }
+        public bool DisponibilidadInmediata { get; set; }
+        public bool AceptaMascotas { get; set; }
+        public bool AceptaCredito { get; set; }
+        public DateTime FechaCreacion { get; set; }
+        public DateTime FechaActualizacion { get; set; }
+        
+        // Aliases para compatibilidad
+        public string TipoPropiedad => Tipo;
+        public string TipoOperacion => Operacion;
+        public int? Baños => Banos;
+        public int? SuperficieCubierta => MetrosCubiertos;
+        public int? SuperficieTotal => MetrosTotales;
+        
         public List<PropiedadMediaDto> Medias { get; set; } = new();
     }
 
@@ -137,8 +158,10 @@ namespace LandingBack.Data.Dtos
     {
         public int Id { get; set; }
         public string Tipo { get; set; } = null!;
+        public string TipoArchivo { get; set; } = null!;
         public string Url { get; set; } = null!;
         public string? Titulo { get; set; }
         public int Orden { get; set; }
+        public bool EsPrincipal { get; set; }
     }
 }

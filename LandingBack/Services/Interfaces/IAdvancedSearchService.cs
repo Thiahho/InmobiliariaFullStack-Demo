@@ -5,7 +5,7 @@ namespace LandingBack.Services.Interfaces
     public interface IAdvancedSearchService
     {
         Task<(IEnumerable<PropiedadResponseDto> Propiedades, int TotalCount, SearchStatsDto Stats)> BusquedaAvanzadaAsync(AdvancedSearchDto searchDto);
-        Task<IEnumerable<AutocompleteResultDto>> AutocompleteAsync(AutocompleteDto autocompleteDto);
+        Task<IEnumerable<AutocompleteResultDto>> AutocompleteAsync(AutocompleteRequestDto autocompleteDto);
         Task<SearchStatsDto> GetSearchStatsAsync(AdvancedSearchDto searchDto);
         
         // Búsquedas guardadas

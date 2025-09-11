@@ -8,5 +8,7 @@ namespace LandingBack.Services.Interfaces
         Task<LoginResponseDto?> RefreshTokenAsync(RefreshTokenRequestDto request);
         Task<bool> RevokeTokenAsync(string refreshToken);
         Task LogoutAsync(int agenteId);
+        Task<bool> CreateAdminAsync(CreateAdminDto createAdminDto);
+        Task<bool> GetAdminExistsAsync();
     }
 }

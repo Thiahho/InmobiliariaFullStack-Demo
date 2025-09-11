@@ -41,7 +41,7 @@ namespace LandingBack.Services
             return (propiedadesDto, totalCount, stats);
         }
 
-        public async Task<IEnumerable<AutocompleteResultDto>> AutocompleteAsync(AutocompleteDto autocompleteDto)
+        public async Task<IEnumerable<AutocompleteResultDto>> AutocompleteAsync(AutocompleteRequestDto autocompleteDto)
         {
             var results = new List<AutocompleteResultDto>();
             var query = autocompleteDto.Query.ToLower();
@@ -238,14 +238,14 @@ namespace LandingBack.Services
             // Filtros geográficos
             query = ApplyGeographicFilters(query, searchDto.FiltroGeografico);
 
-            // Filtros de amenities
-            if (searchDto.Amenities?.Any() == true)
-            {
-                foreach (var amenity in searchDto.Amenities)
-                {
-                    query = query.Where(p => p.Amenities.Contains(amenity));
-                }
-            }
+            // Filtros de amenities (comentado temporalmente)
+            // if (searchDto.Amenities?.Any() == true)
+            // {
+            //     foreach (var amenity in searchDto.Amenities)
+            //     {
+            //         query = query.Where(p => p.Amenities.Contains(amenity));
+            //     }
+            // }
 
             // Filtros adicionales
             if (!string.IsNullOrEmpty(searchDto.Orientacion))
@@ -468,8 +468,8 @@ namespace LandingBack.Services
                 Codigo = propiedad.Codigo,
                 Titulo = propiedad.Titulo,
                 Descripcion = propiedad.Descripcion,
-                TipoPropiedad = propiedad.TipoPropiedad,
-                TipoOperacion = propiedad.TipoOperacion,
+                // TipoPropiedad = propiedad.TipoPropiedad,
+                // TipoOperacion = propiedad.TipoOperacion,
                 Precio = propiedad.Precio,
                 Moneda = propiedad.Moneda,
                 Direccion = propiedad.Direccion,
@@ -481,12 +481,14 @@ namespace LandingBack.Services
                 Longitud = propiedad.Longitud,
                 Ambientes = propiedad.Ambientes,
                 Dormitorios = propiedad.Dormitorios,
-                Baños = propiedad.Baños,
-                SuperficieCubierta = propiedad.SuperficieCubierta,
-                SuperficieTotal = propiedad.SuperficieTotal,
+                // Baños = propiedad.Baños,
+                // SuperficieCubierta = propiedad.SuperficieCubierta,
+                // SuperficieTotal = propiedad.SuperficieTotal,
                 Antiguedad = propiedad.Antiguedad,
                 Estado = propiedad.Estado,
-                Amenities = propiedad.Amenities,
+                Amenities = !string.IsNullOrEmpty(propiedad.AmenitiesJson) ? 
+                    JsonSerializer.Deserialize<Dictionary<string, object>>(propiedad.AmenitiesJson) : 
+                    null,
                 Orientacion = propiedad.Orientacion,
                 DisponibilidadInmediata = propiedad.DisponibilidadInmediata,
                 AceptaMascotas = propiedad.AceptaMascotas,

@@ -88,7 +88,7 @@ namespace LandingBack.Data.Dtos
         public double Longitud { get; set; }
     }
 
-    public class AutocompleteDto
+    public class AutocompleteRequestDto
     {
         [Required]
         [MinLength(2)]
