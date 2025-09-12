@@ -3,8 +3,16 @@ import { useAuthStore } from '../../store/authStore';
 import { axiosClient } from '../../lib/axiosClient';
 // import { useNavigate } from 'react-router-dom';
 
-export default function Login() {
-  const [isOpen, setIsOpen] = useState(false);
+interface LoginProps {
+  isOpen?: boolean;
+  setIsOpen?: (open: boolean) => void;
+}
+
+export default function Login({ isOpen: propIsOpen, setIsOpen: propSetIsOpen }: LoginProps = {}) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  
+  const isOpen = propIsOpen !== undefined ? propIsOpen : internalIsOpen;
+  const setIsOpen = propSetIsOpen || setInternalIsOpen;
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -70,12 +78,12 @@ export default function Login() {
 
   return (
     <>
-      <button 
+      {/* <button 
         onClick={() => setIsOpen(true)}
         className="fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 z-50"
       >
         Iniciar Sesión
-      </button>
+      </button> */}
       
       {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

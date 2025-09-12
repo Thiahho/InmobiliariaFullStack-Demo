@@ -257,15 +257,22 @@ namespace LandingBack.Services
         {
             try
             {
+                _logger.LogInformation("🔧 SERVICE: Iniciando búsqueda en PropiedadesService");
+                _logger.LogInformation("🔧 SERVICE: SearchTerm recibido: '{SearchTerm}'", searchDto.SearchTerm ?? "NULL");
+                
                 var query = _appDbContext.Propiedades
                     .Include(p => p.Medias)
                     .AsQueryable();
+
+                _logger.LogInformation("🔧 SERVICE: Query inicial creada");
 
                 // Filtros
                 // Búsqueda general por múltiples campos
                 if (!string.IsNullOrEmpty(searchDto.SearchTerm))
                 {
                     var searchTerm = searchDto.SearchTerm.ToLower();
+                    _logger.LogInformation("🔍 SERVICE: Aplicando filtro SearchTerm: '{SearchTerm}' (lowercase)", searchTerm);
+                    
                     query = query.Where(p => 
                         p.Codigo.ToLower().Contains(searchTerm) ||
                         p.Direccion.ToLower().Contains(searchTerm) ||
@@ -274,6 +281,12 @@ namespace LandingBack.Services
                         (p.Titulo != null && p.Titulo.ToLower().Contains(searchTerm)) ||
                         (p.Descripcion != null && p.Descripcion.ToLower().Contains(searchTerm))
                     );
+                    
+                    _logger.LogInformation("✅ SERVICE: Filtro SearchTerm aplicado");
+                }
+                else
+                {
+                    _logger.LogInformation("⚠️ SERVICE: SearchTerm está vacío o null, no se aplica filtro");
                 }
 
                 if (!string.IsNullOrEmpty(searchDto.Operacion))
@@ -319,16 +332,27 @@ namespace LandingBack.Services
                 };
 
                 // Conteo total antes de paginación
+                _logger.LogInformation("📊 SERVICE: Ejecutando query.CountAsync()...");
                 var totalCount = await query.CountAsync();
+                _logger.LogInformation("📊 SERVICE: Total encontrado: {TotalCount}", totalCount);
 
                 // Paginación
+                _logger.LogInformation("📄 SERVICE: Aplicando paginación - Page: {Page}, PageSize: {PageSize}", searchDto.Page, searchDto.PageSize);
                 var propiedades = await query
                     .Skip((searchDto.Page - 1) * searchDto.PageSize)
                     .Take(searchDto.PageSize)
                     .AsNoTracking()
                     .ToListAsync();
 
+                _logger.LogInformation("📄 SERVICE: Propiedades obtenidas: {Count}", propiedades.Count);
+                
                 var propiedadesDto = _mapper.Map<List<PropiedadResponseDto>>(propiedades);
+                _logger.LogInformation("🏠 SERVICE: Propiedades mapeadas a DTO: {Count}", propiedadesDto.Count);
+                
+                // Log algunos códigos de ejemplo
+                var ejemplosCodigos = propiedadesDto.Take(3).Select(p => p.Codigo).ToList();
+                _logger.LogInformation("🏷️ SERVICE: Ejemplos de códigos encontrados: {Codigos}", string.Join(", ", ejemplosCodigos));
+                
                 return (propiedadesDto, totalCount);
             }
             catch (Exception ex)

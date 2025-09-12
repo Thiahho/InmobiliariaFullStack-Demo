@@ -38,26 +38,6 @@ namespace LandingBack.Controllers
             }
         }
 
-        // GET: api/propiedades/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<PropiedadResponseDto>> GetPropiedad(int id)
-        {
-            try
-            {
-                var propiedad = await _propiedadesService.GetPropiedadByIdAsync(id);
-                return Ok(propiedad);
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener propiedad {Id}", id);
-                return StatusCode(500, "Error interno del servidor");
-            }
-        }
-
         // GET: api/propiedades/search
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<PropiedadResponseDto>>> SearchPropiedades(
@@ -190,12 +170,23 @@ namespace LandingBack.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
+                _logger.LogInformation("🔍 BÚSQUEDA AVANZADA INICIADA");
+                _logger.LogInformation("📥 Parámetros recibidos: {@SearchDto}", searchDto);
+                _logger.LogInformation("🔑 SearchTerm: '{SearchTerm}'", searchDto.SearchTerm ?? "NULL");
+                _logger.LogInformation("📊 Page: {Page}, PageSize: {PageSize}", searchDto.Page, searchDto.PageSize);
 
+                if (!ModelState.IsValid)
+                {
+                    _logger.LogWarning("❌ ModelState inválido: {@ModelState}", ModelState);
+                    return BadRequest(ModelState);
+                }
+
+                _logger.LogInformation("✅ ModelState válido, llamando al servicio...");
                 var (propiedades, totalCount) = await _propiedadesService.SearchPropiedadesAsync(searchDto);
                 
-                return Ok(new
+                _logger.LogInformation("📈 Resultados: {Count} propiedades encontradas de {Total} total", propiedades?.Count() ?? 0, totalCount);
+                
+                var response = new
                 {
                     Data = propiedades,
                     TotalCount = totalCount,
@@ -204,6 +195,7 @@ namespace LandingBack.Controllers
                     TotalPaginas = (int)Math.Ceiling((double)totalCount / searchDto.PageSize),
                     Filtros = new
                     {
+                        searchDto.SearchTerm,
                         searchDto.Operacion,
                         searchDto.Tipo,
                         searchDto.Barrio,
@@ -216,11 +208,14 @@ namespace LandingBack.Controllers
                         searchDto.Estado,
                         searchDto.Destacado
                     }
-                });
+                };
+
+                _logger.LogInformation("✅ Respuesta preparada: {TotalPages} páginas totales", response.TotalPaginas);
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error en búsqueda avanzada");
+                _logger.LogError(ex, "❌ ERROR en búsqueda avanzada: {Message}", ex.Message);
                 return StatusCode(500, "Error interno del servidor");
             }
         }
@@ -395,6 +390,26 @@ namespace LandingBack.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al ejecutar búsqueda guardada");
+                return StatusCode(500, "Error interno del servidor");
+            }
+        }
+
+        // GET: api/propiedades/{id}
+        [HttpGet("{id}")]
+        public async Task<ActionResult<PropiedadResponseDto>> GetPropiedad(int id)
+        {
+            try
+            {
+                var propiedad = await _propiedadesService.GetPropiedadByIdAsync(id);
+                return Ok(propiedad);
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener propiedad {Id}", id);
                 return StatusCode(500, "Error interno del servidor");
             }
         }

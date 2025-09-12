@@ -45,8 +45,15 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
   };
 
   const handleSearch = () => {
+    console.log("🔍 LISTA: Iniciando búsqueda");
+    console.log("🔍 LISTA: SearchTerm actual:", searchTerm);
+    console.log("🔍 LISTA: Filtros actuales:", filtros);
+    
     const newFiltros = { ...filtros, searchTerm, page: 1 };
+    console.log("🔍 LISTA: Nuevos filtros:", newFiltros);
+    
     setFiltros(newFiltros);
+    console.log("🔍 LISTA: Llamando fetchPropiedades...");
     fetchPropiedades(newFiltros);
   };
 

@@ -60,6 +60,11 @@ export const usePropiedadesStore = create((set, get) => ({
           return false;
         }
         
+        // Si es searchTerm, considéralo como filtro si tiene contenido
+        if (key === 'searchTerm') {
+          return value !== '' && value !== null && value !== undefined;
+        }
+        
         // Verificar si el valor es diferente al valor por defecto
         const defaultValue = defaultFilters[key];
         return value !== defaultValue && value !== '' && value !== null && value !== undefined;
@@ -86,7 +91,13 @@ export const usePropiedadesStore = create((set, get) => ({
           searchTerm: filtrosFinales.searchTerm || null // Agregar searchTerm como campo separado
         };
 
+        console.log("🚀 FRONTEND: Enviando búsqueda avanzada");
+        console.log("📤 FRONTEND: Filtros finales:", filtrosFinales);
+        console.log("📤 FRONTEND: SearchData que se enviará:", searchData);
+        console.log("🔑 FRONTEND: SearchTerm:", searchData.searchTerm);
+
         response = await axiosClient.post("/propiedades/buscar-avanzada", searchData);
+        console.log("📥 FRONTEND: Respuesta recibida:", response.data);
         const { Data, TotalCount, Pagina, TamanoPagina, TotalPaginas } = response.data;
 
         set({

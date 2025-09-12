@@ -5,6 +5,7 @@ import Login from "./auth/Login";
 
 const Navbar = () => {
   const [showMobileMenu, setMobileMenu] = React.useState(false);
+  const [showLogin, setShowLogin] = React.useState(false);
   useEffect(() => {
     if (showMobileMenu) {
       document.body.style.overflow = "hidden";
@@ -44,7 +45,14 @@ const Navbar = () => {
             </a>
           </li>
         </ul>
-        <Login />
+        <button 
+          type="button" 
+          aria-label="Iniciar Sesión" 
+          onClick={() => setShowLogin(true)} 
+          className="hidden md:block bg-white px-8 py-2 rounded-full text-black hover:bg-gray-100 transition"
+        >
+          Iniciar Sesión
+        </button>
         <button
           type="button"
           aria-label="Abrir menú"
@@ -106,8 +114,18 @@ const Navbar = () => {
           >
             Testimonios
           </a>
+          <button
+            onClick={() => {
+              setMobileMenu(false);
+              setShowLogin(true);
+            }}
+            className="px-8 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition mt-4"
+          >
+            Iniciar Sesión
+          </button>
         </ul>
       </div>
+      {showLogin && <Login isOpen={showLogin} setIsOpen={setShowLogin} />}
     </div>
   );
 };
