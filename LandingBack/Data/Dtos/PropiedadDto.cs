@@ -137,6 +137,7 @@ namespace LandingBack.Data.Dtos
 
     public class PropiedadSearchDto
     {
+        public string? SearchTerm { get; set; } // Búsqueda general por código, dirección, barrio, etc.
         public string? Operacion { get; set; }
         public string? Tipo { get; set; }
         public string? Barrio { get; set; }

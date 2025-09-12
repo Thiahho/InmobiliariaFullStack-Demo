@@ -262,6 +262,20 @@ namespace LandingBack.Services
                     .AsQueryable();
 
                 // Filtros
+                // Búsqueda general por múltiples campos
+                if (!string.IsNullOrEmpty(searchDto.SearchTerm))
+                {
+                    var searchTerm = searchDto.SearchTerm.ToLower();
+                    query = query.Where(p => 
+                        p.Codigo.ToLower().Contains(searchTerm) ||
+                        p.Direccion.ToLower().Contains(searchTerm) ||
+                        p.Barrio.ToLower().Contains(searchTerm) ||
+                        p.Comuna.ToLower().Contains(searchTerm) ||
+                        (p.Titulo != null && p.Titulo.ToLower().Contains(searchTerm)) ||
+                        (p.Descripcion != null && p.Descripcion.ToLower().Contains(searchTerm))
+                    );
+                }
+
                 if (!string.IsNullOrEmpty(searchDto.Operacion))
                     query = query.Where(p => p.Operacion == searchDto.Operacion);
 

@@ -79,6 +79,7 @@ namespace LandingBack.Services
             {
                 AccessToken = accessToken,
                 RefreshToken = agente.RefreshToken,
+                token = accessToken, // Para compatibilidad con frontend
                 ExpiresAt = DateTime.UtcNow.AddMinutes(Convert.ToInt32(_configuration["Jwt:AccessTokenExpirationMinutes"])),
                 Agente = new AgenteDto
                 {
@@ -120,6 +121,7 @@ namespace LandingBack.Services
             {
                 AccessToken = newAccessToken,
                 RefreshToken = newRefreshToken,
+                token = newAccessToken, // Para compatibilidad con frontend
                 ExpiresAt = DateTime.UtcNow.AddMinutes(Convert.ToInt32(_configuration["Jwt:AccessTokenExpirationMinutes"])),
                 Agente = new AgenteDto
                 {

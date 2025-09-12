@@ -53,6 +53,14 @@ namespace LandingBack.Services
 
         public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
         {
+            if (string.IsNullOrEmpty(token))
+                throw new SecurityTokenException("Token vacío o nulo");
+
+            // Validar que el token tenga el formato correcto (3 partes separadas por puntos)
+            var tokenParts = token.Split('.');
+            if (tokenParts.Length != 3)
+                throw new SecurityTokenException("Token con formato inválido");
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
 
             var tokenValidationParameters = new TokenValidationParameters

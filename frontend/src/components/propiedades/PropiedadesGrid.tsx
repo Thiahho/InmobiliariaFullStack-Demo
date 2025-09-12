@@ -12,7 +12,7 @@ export default function PropiedadesGrid() {
         {projectsData.map((propiedad, index) => (
           <div key={index} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
             <img 
-              src={propiedad.image} 
+              src={typeof propiedad.image === 'string' ? propiedad.image : propiedad.image.src} 
               alt={propiedad.title}
               className="w-full h-48 object-cover"
             />

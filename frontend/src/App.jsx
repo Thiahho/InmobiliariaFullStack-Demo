@@ -10,7 +10,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Footer from "./components/Footer";
 import Filtros from "./components/propiedades/Filtros";
 import PropiedadesGrid from "./components/propiedades/PropiedadesGrid";
-import Login from "./components/auth/Login";
+import Login from "./components/auth/Login.tsx";
 import AdminPanel from "./components/admin/AdminPanel";
 import AgentePanel from "./components/admin/AgentePanel";
 import CargadorPanel from "./components/admin/CargadorPanel";

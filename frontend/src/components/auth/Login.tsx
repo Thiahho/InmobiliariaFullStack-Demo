@@ -14,7 +14,7 @@ export default function Login() {
   
   const login = useAuthStore(state => state.login);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
@@ -22,7 +22,7 @@ export default function Login() {
     setError('');
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.email || !formData.password) {
       setError('Por favor completa todos los campos');
@@ -33,14 +33,24 @@ export default function Login() {
     setError('');
 
     try {
+      console.log("Enviando datos de login:", formData);
       const response = await axiosClient.post('/auth/login', formData);
+      console.log("Respuesta completa del login:", response);
+      console.log("Data de la respuesta:", response.data);
       
       if (response.data) {
-        const { AccessToken, RefreshToken, Agente } = response.data;
+        const { token, AccessToken, RefreshToken, Agente } = response.data;
+        console.log("Tokens extraídos:", { token, AccessToken, RefreshToken, Agente });
         
-        // Guardar tokens en localStorage
-        localStorage.setItem('access_token', AccessToken);
+        // Guardar tokens en localStorage (usar 'token' como en DrCell)
+        const accessToken = token || AccessToken; // Priorizar 'token'
+        localStorage.setItem('access_token', accessToken);
         localStorage.setItem('refresh_token', RefreshToken);
+        console.log("Tokens guardados en localStorage");
+        
+        // Verificar que se guardaron correctamente
+        console.log("Verificación - Access Token guardado:", localStorage.getItem('access_token'));
+        console.log("Verificación - Refresh Token guardado:", localStorage.getItem('refresh_token'));
         
         // Actualizar el store de autenticación
         login(Agente || {}, Agente?.Rol || 'Admin');
@@ -48,8 +58,10 @@ export default function Login() {
         // Cerrar modal y rediriger al panel
         setIsOpen(false);
         window.location.href = '/admin';
+      } else {
+        console.error("No hay data en la respuesta:", response);
       }
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);

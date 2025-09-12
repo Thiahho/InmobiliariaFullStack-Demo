@@ -86,7 +86,7 @@ namespace LandingBack.Data.Dtos
     public class StatsDto
     {
         public int TotalPropiedades { get; set; }
-        public int PropiedadesActivas { get; set; }
+        public int Propiedadesas { get; set; }
         public int PropiedadesVendidas { get; set; }
         public int PropiedadesReservadas { get; set; }
         public int TotalLeads { get; set; }

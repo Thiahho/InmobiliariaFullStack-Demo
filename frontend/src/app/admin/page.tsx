@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useRouter } from 'next/navigation';
 import { axiosClient } from '../../lib/axiosClient';
+import { PropiedadesSection } from '../../components/propiedades';
+// import TestPropiedades from '../../components/propiedades/TestPropiedades';
 
 export default function AdminPage() {
   const { isAuthenticated, user, role, logout } = useAuthStore();
@@ -109,34 +111,7 @@ export default function AdminPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
             {/* Card: Gestión de Propiedades */}
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                      🏠
-                    </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Propiedades
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        Gestionar propiedades
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 px-5 py-3">
-                <div className="text-sm">
-                  <button className="font-medium text-blue-600 hover:text-blue-500">
-                    Ver todas las propiedades →
-                  </button>
-                </div>
-              </div>
-            </div>
+            <PropiedadesSection />
 
             {/* Card: Gestión de Leads */}
             <div className="bg-white overflow-hidden shadow rounded-lg">
@@ -263,6 +238,11 @@ export default function AdminPage() {
             )}
 
           </div>
+
+          {/* Test de Propiedades - Comentado temporalmente */}
+          {/* <div className="mt-8">
+            <TestPropiedades />
+          </div> */}
 
           {/* Información del usuario */}
           <div className="mt-8 bg-white shadow rounded-lg">

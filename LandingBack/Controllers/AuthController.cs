@@ -98,6 +98,28 @@ namespace LandingBack.Controllers
             return Ok(new { message = "Administrador creado exitosamente" });
         }
 
+        [HttpGet("admin-exists")]
+        public async Task<IActionResult> AdminExists()
+        {
+            var exists = await _authService.GetAdminExistsAsync();
+            return Ok(new { adminExists = exists });
+        }
+
+        [HttpGet("debug-headers")]
+        public IActionResult DebugHeaders()
+        {
+            var authHeader = Request.Headers.Authorization.ToString();
+            var allHeaders = Request.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}");
+            
+            return Ok(new 
+            { 
+                authorizationHeader = authHeader,
+                allHeaders = allHeaders,
+                isAuthenticated = User?.Identity?.IsAuthenticated ?? false,
+                claims = User?.Claims?.Select(c => $"{c.Type}: {c.Value}")
+            });
+        }
+
         [HttpGet("me")]
         [Authorize]
         public IActionResult GetCurrentUser()
