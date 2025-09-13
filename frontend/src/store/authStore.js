@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { axiosClient } from "../lib/axiosClient";
 
 export const Roles = {
   Admin: "Admin",
@@ -31,6 +32,19 @@ export const useAuthStore = create((set, get) => ({
   login: (user, role = Roles.Admin) => set({ isAuthenticated: true, user, role }),
   logout: () => set({ isAuthenticated: false, user: null, role: null }),
   setRole: (role) => set({ role }),
+  updateProfile: async (updates) => {
+    try {
+      const res = await axiosClient.put('/usuarios/profile', updates);
+      const updated = res.data;
+      set((state) => ({
+        user: { ...(state.user || {}), ...updated },
+      }));
+      return updated;
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Error al actualizar perfil';
+      throw new Error(message);
+    }
+  },
   hasPermission: (perm) => {
     const role = get().role;
     if (!role) return false;

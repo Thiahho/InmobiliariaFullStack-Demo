@@ -1,6 +1,11 @@
 import axios from "axios";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5174/api";
+const baseURL =
+  (typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_API_URL) ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://localhost:5174/api";
 
 export const axiosClient = axios.create({
   baseURL,
@@ -30,10 +35,15 @@ axiosClient.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem("refresh_token");
         const accessToken = localStorage.getItem("access_token");
-        
-        if (refreshToken && refreshToken !== "null" && refreshToken !== "undefined" &&
-            accessToken && accessToken !== "null" && accessToken !== "undefined") {
-          
+
+        if (
+          refreshToken &&
+          refreshToken !== "null" &&
+          refreshToken !== "undefined" &&
+          accessToken &&
+          accessToken !== "null" &&
+          accessToken !== "undefined"
+        ) {
           const response = await axios.post(`${baseURL}/auth/refresh-token`, {
             refreshToken,
             accessToken,

@@ -75,6 +75,7 @@ builder.Services.AddAuthorization(options =>
 // Register services
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUsuariosService, UsuariosService>();
 builder.Services.AddScoped<IPropiedadesService, PropiedadesService>();
 builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
 builder.Services.AddScoped<IGeoService, GeoService>();

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useAuthStore } from '../../store/authStore';
 import { useRouter } from 'next/navigation';
 import { axiosClient } from '../../lib/axiosClient';
@@ -70,7 +71,7 @@ export default function AdminPage() {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Acceso no autorizado</h1>
-          <button 
+          <button
             onClick={() => router.push('/')}
             className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
           >
@@ -95,6 +96,12 @@ export default function AdminPage() {
                 <p className="text-sm font-medium text-gray-900">{user.nombre}</p>
                 <p className="text-xs text-gray-500">{role}</p>
               </div>
+              <Link
+                href="/perfil"
+                className="bg-white border px-4 py-2 rounded-lg hover:bg-gray-50 text-sm"
+              >
+                Mi Perfil
+              </Link>
               <button
                 onClick={handleLogout}
                 className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm"
@@ -109,7 +116,7 @@ export default function AdminPage() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
+
             {/* Card: Gestión de Propiedades */}
             <PropiedadesSection />
 
@@ -198,7 +205,7 @@ export default function AdminPage() {
                   </div>
                   <div className="bg-gray-50 px-5 py-3">
                     <div className="text-sm">
-                      <button className="font-medium text-purple-600 hover:text-purple-500">
+                      <button onClick={() => router.push('/admin/agentes')} className="font-medium text-purple-600 hover:text-purple-500">
                         Ver todos los agentes →
                       </button>
                     </div>

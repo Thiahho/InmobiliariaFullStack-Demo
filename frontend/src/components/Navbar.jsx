@@ -1,11 +1,15 @@
 "use client";
 import React, { useEffect } from "react";
+import Link from "next/link";
+import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { assets } from "../assets/assets/assets";
 import Login from "./auth/Login";
+import { useAuthStore } from "../store/authStore";
 
 const Navbar = () => {
   const [showMobileMenu, setMobileMenu] = React.useState(false);
   const [showLogin, setShowLogin] = React.useState(false);
+  const { isAuthenticated, role } = useAuthStore();
   useEffect(() => {
     if (showMobileMenu) {
       document.body.style.overflow = "hidden";
@@ -45,14 +49,26 @@ const Navbar = () => {
             </a>
           </li>
         </ul>
-        <button 
-          type="button" 
-          aria-label="Iniciar Sesión" 
-          onClick={() => setShowLogin(true)} 
-          className="hidden md:block bg-white px-8 py-2 rounded-full text-black hover:bg-gray-100 transition"
-        >
-          Iniciar Sesión
-        </button>
+        {isAuthenticated ? (
+          <div className="hidden md:flex items-center gap-3">
+            <Link href="/perfil" className="inline-flex items-center gap-2 bg-white/90 px-4 py-2 rounded-full text-black hover:bg-white">
+              <UserCircleIcon className="w-5 h-5" />
+              Perfil
+            </Link>
+            <Link href="/admin" className="inline-flex items-center gap-2 bg-white/90 px-4 py-2 rounded-full text-black hover:bg-white">
+              Panel
+            </Link>
+          </div>
+        ) : (
+          <button 
+            type="button" 
+            aria-label="Iniciar Sesión" 
+            onClick={() => setShowLogin(true)} 
+            className="hidden md:block bg-white px-8 py-2 rounded-full text-black hover:bg-gray-100 transition"
+          >
+            Iniciar Sesión
+          </button>
+        )}
         <button
           type="button"
           aria-label="Abrir menú"
@@ -114,15 +130,34 @@ const Navbar = () => {
           >
             Testimonios
           </a>
-          <button
-            onClick={() => {
-              setMobileMenu(false);
-              setShowLogin(true);
-            }}
-            className="px-8 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition mt-4"
-          >
-            Iniciar Sesión
-          </button>
+          {isAuthenticated ? (
+            <>
+              <Link
+                href="/perfil"
+                onClick={() => setMobileMenu(false)}
+                className="px-4 py-2 rounded-full inline-block text-black hover:bg-gray-100"
+              >
+                Perfil
+              </Link>
+              <Link
+                href="/admin"
+                onClick={() => setMobileMenu(false)}
+                className="px-4 py-2 rounded-full inline-block text-black hover:bg-gray-100"
+              >
+                Panel
+              </Link>
+            </>
+          ) : (
+            <button
+              onClick={() => {
+                setMobileMenu(false);
+                setShowLogin(true);
+              }}
+              className="px-8 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition mt-4"
+            >
+              Iniciar Sesión
+            </button>
+          )}
         </ul>
       </div>
       {showLogin && <Login isOpen={showLogin} setIsOpen={setShowLogin} />}

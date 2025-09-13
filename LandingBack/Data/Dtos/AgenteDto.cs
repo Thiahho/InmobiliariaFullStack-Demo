@@ -11,4 +11,5 @@ namespace LandingBack.Data.Dtos
         public DateTime UltimoLogin { get; set; }
         public DateTime FechaCreacion { get; set; }
     }
+    
 }

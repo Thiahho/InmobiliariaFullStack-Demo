@@ -136,9 +136,9 @@ namespace LandingBack.Controllers
                 return Ok(new
                 {
                     id = agenteId,
-                    nombre = nombre ?? "Admin",
-                    email = email ?? "admin@inmobiliaria.com",
-                    rol = rol ?? "Admin",
+                    nombre = nombre,
+                    email = email,
+                    rol = rol,
                     activo = bool.Parse(activo ?? "true"),
                     telefono = telefono
                 });

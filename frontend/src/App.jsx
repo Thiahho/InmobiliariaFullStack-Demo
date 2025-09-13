@@ -17,6 +17,8 @@ import CargadorPanel from "./components/admin/CargadorPanel";
 import RoleSwitcher from "./components/auth/RoleSwitcher";
 import Protected from "./components/auth/Protected";
 import { Roles } from "./store/authStore";
+import UsersAdmin from "./components/users/UsersAdmin";
+import UserProfile from "./components/users/UserProfile";
 const App = () => {
   return (
     <div className="w-full overflow-hidden">
@@ -32,12 +34,16 @@ const App = () => {
       <Contact />
       <Protected roles={[Roles.Admin]}>
         <AdminPanel />
+        <UsersAdmin />
       </Protected>
       <Protected roles={[Roles.Agente]}>
         <AgentePanel />
       </Protected>
       <Protected roles={[Roles.Cargador]}>
         <CargadorPanel />
+      </Protected>
+      <Protected roles={[Roles.Admin, Roles.Agente, Roles.Cargador]}>
+        <UserProfile />
       </Protected>
       <Footer />
     </div>

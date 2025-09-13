@@ -162,5 +162,113 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\lib\jquery\LICENSE.txt'))</OriginalItemSpec>
     </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\properties\0e5c5aa5-f77c-40b6-a820-e6055360896e_depa.webp'))">
+      <SourceType>Package</SourceType>
+      <SourceId>LandingBack</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/LandingBack</BasePath>
+      <RelativePath>uploads/properties/0e5c5aa5-f77c-40b6-a820-e6055360896e_depa.webp</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <Fingerprint>ytchdcvt3s</Fingerprint>
+      <Integrity>ypdDjiwF3Jq2UBJONOvp+5FnkdWs1lIfF23zdPk1ouA=</Integrity>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\properties\0e5c5aa5-f77c-40b6-a820-e6055360896e_depa.webp'))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\properties\412ba8b9-5b89-4fde-8366-384539917a6f_depa.webp'))">
+      <SourceType>Package</SourceType>
+      <SourceId>LandingBack</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/LandingBack</BasePath>
+      <RelativePath>uploads/properties/412ba8b9-5b89-4fde-8366-384539917a6f_depa.webp</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <Fingerprint>930xq5yprl</Fingerprint>
+      <Integrity>S5PlkEUMLjDC+akKoMjKMXAK5l5Wd9wO9tLXXz8lvwE=</Integrity>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\properties\412ba8b9-5b89-4fde-8366-384539917a6f_depa.webp'))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\properties\5697d441-ea21-4053-ab6c-e52168619812_casa.webp'))">
+      <SourceType>Package</SourceType>
+      <SourceId>LandingBack</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/LandingBack</BasePath>
+      <RelativePath>uploads/properties/5697d441-ea21-4053-ab6c-e52168619812_casa.webp</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <Fingerprint>uv65nkx5h7</Fingerprint>
+      <Integrity>GklroDziaLFCRrTV/F2luqu/aefHXYpkbQ/UH1SsqPY=</Integrity>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\properties\5697d441-ea21-4053-ab6c-e52168619812_casa.webp'))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\properties\b4170507-3bd2-4e31-a551-4675f4279e49_casa-venta.webp'))">
+      <SourceType>Package</SourceType>
+      <SourceId>LandingBack</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/LandingBack</BasePath>
+      <RelativePath>uploads/properties/b4170507-3bd2-4e31-a551-4675f4279e49_casa-venta.webp</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <Fingerprint>vokz1365uy</Fingerprint>
+      <Integrity>gX/FE6HpH4+aSqc9Tb4wiNxcgoVhr5dTJCPDlTJyDoM=</Integrity>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\properties\b4170507-3bd2-4e31-a551-4675f4279e49_casa-venta.webp'))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\properties\d8c2659a-5ca9-4272-8f14-299d14e64fb8_depa1.webp'))">
+      <SourceType>Package</SourceType>
+      <SourceId>LandingBack</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/LandingBack</BasePath>
+      <RelativePath>uploads/properties/d8c2659a-5ca9-4272-8f14-299d14e64fb8_depa1.webp</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <Fingerprint>4bbybvcnod</Fingerprint>
+      <Integrity>wLR0Td32ci1whHI7EghEqaYJlk3IRun2QXfDBvT8vsY=</Integrity>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\properties\d8c2659a-5ca9-4272-8f14-299d14e64fb8_depa1.webp'))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\properties\e4edc7c5-0f40-4c9d-a17e-9d0d985508a2_depa2.webp'))">
+      <SourceType>Package</SourceType>
+      <SourceId>LandingBack</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/LandingBack</BasePath>
+      <RelativePath>uploads/properties/e4edc7c5-0f40-4c9d-a17e-9d0d985508a2_depa2.webp</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <Fingerprint>4bbybvcnod</Fingerprint>
+      <Integrity>wLR0Td32ci1whHI7EghEqaYJlk3IRun2QXfDBvT8vsY=</Integrity>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\uploads\properties\e4edc7c5-0f40-4c9d-a17e-9d0d985508a2_depa2.webp'))</OriginalItemSpec>
+    </StaticWebAsset>
   </ItemGroup>
 </Project>

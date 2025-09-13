@@ -98,20 +98,25 @@ export const usePropiedadesStore = create((set, get) => ({
 
         response = await axiosClient.post("/propiedades/buscar-avanzada", searchData);
         console.log("📥 FRONTEND: Respuesta recibida:", response.data);
-        const { Data, TotalCount, Pagina, TamanoPagina, TotalPaginas } = response.data;
+        const payload = response.data || {};
+        const data = payload.data ?? payload.Data ?? [];
+        const totalCount = payload.totalCount ?? payload.TotalCount ?? 0;
+        const pagina = payload.pagina ?? payload.Pagina ?? 1;
+        const tamanoPagina = payload.tamanoPagina ?? payload.TamanoPagina ?? (filtrosFinales.pageSize || 20);
+        const totalPaginas = payload.totalPaginas ?? payload.TotalPaginas ?? 0;
 
         set({
-          propiedades: Data || [],
+          propiedades: Array.isArray(data) ? data : [],
           paginacion: {
-            totalCount: TotalCount || 0,
-            totalPages: TotalPaginas || 0,
-            currentPage: Pagina || 1,
-            pageSize: TamanoPagina || 20
+            totalCount,
+            totalPages: totalPaginas,
+            currentPage: pagina,
+            pageSize: tamanoPagina
           },
           loading: false
         });
 
-        return Data;
+        return data;
       } else {
         // Usar endpoint simple de paginación si no hay filtros
         const params = new URLSearchParams();
@@ -427,20 +432,25 @@ export const usePropiedadesStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await axiosClient.post("/propiedades/buscar-avanzada", searchParams);
-      const { Data, TotalCount, TotalPaginas, Pagina, TamanoPagina } = response.data;
+      const payload = response.data || {};
+      const data = payload.data ?? payload.Data ?? [];
+      const totalCount = payload.totalCount ?? payload.TotalCount ?? 0;
+      const pagina = payload.pagina ?? payload.Pagina ?? 1;
+      const tamanoPagina = payload.tamanoPagina ?? payload.TamanoPagina ?? (searchParams?.pageSize || 20);
+      const totalPaginas = payload.totalPaginas ?? payload.TotalPaginas ?? 0;
 
       set({
-        propiedades: Data,
+        propiedades: Array.isArray(data) ? data : [],
         paginacion: {
-          totalCount: TotalCount,
-          totalPages: TotalPaginas,
-          currentPage: Pagina,
-          pageSize: TamanoPagina
+          totalCount,
+          totalPages: totalPaginas,
+          currentPage: pagina,
+          pageSize: tamanoPagina
         },
         loading: false
       });
 
-      return response.data;
+      return payload;
     } catch (error) {
       console.error("Error en búsqueda avanzada:", error);
       set({ error: error.response?.data?.message || "Error en búsqueda", loading: false });

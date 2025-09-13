@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { usePropiedadesStore } from '../../store/propiedadesStore';
-import { useAuthStore } from '../../store/authStore';
-import { toast } from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import { usePropiedadesStore } from "../../store/propiedadesStore";
+import { useAuthStore } from "../../store/authStore";
+import { toast } from "react-hot-toast";
 import {
   PencilIcon,
   TrashIcon,
@@ -15,8 +15,8 @@ import {
   MapPinIcon,
   CurrencyDollarIcon,
   HomeIcon,
-  CalendarIcon
-} from '@heroicons/react/24/outline';
+  CalendarIcon,
+} from "@heroicons/react/24/outline";
 
 const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
   const {
@@ -28,13 +28,13 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
     fetchPropiedades,
     deletePropiedad,
     setFiltros,
-    resetFiltros
+    resetFiltros,
   } = usePropiedadesStore();
 
   const { hasPermission } = useAuthStore();
 
   const [showFilters, setShowFilters] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchPropiedades();
@@ -48,10 +48,10 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
     console.log("🔍 LISTA: Iniciando búsqueda");
     console.log("🔍 LISTA: SearchTerm actual:", searchTerm);
     console.log("🔍 LISTA: Filtros actuales:", filtros);
-    
+
     const newFiltros = { ...filtros, searchTerm, page: 1 };
     console.log("🔍 LISTA: Nuevos filtros:", newFiltros);
-    
+
     setFiltros(newFiltros);
     console.log("🔍 LISTA: Llamando fetchPropiedades...");
     fetchPropiedades(newFiltros);
@@ -64,78 +64,84 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
   };
 
   const handleDelete = async (propiedad) => {
-    if (window.confirm(`¿Está seguro de eliminar la propiedad "${propiedad.codigo}"?`)) {
+    if (
+      window.confirm(
+        `¿Está seguro de eliminar la propiedad "${propiedad.codigo}"?`
+      )
+    ) {
       try {
         await deletePropiedad(propiedad.id);
-        toast.success('Propiedad eliminada exitosamente');
+        toast.success("Propiedad eliminada exitosamente");
       } catch (error) {
-        console.error('Error al eliminar:', error);
+        console.error("Error al eliminar:", error);
       }
     }
   };
 
-  const formatPrice = (price, currency = 'USD') => {
-    const formatter = new Intl.NumberFormat('es-AR', {
-      style: 'currency',
+  const formatPrice = (price, currency = "USD") => {
+    const formatter = new Intl.NumberFormat("es-AR", {
+      style: "currency",
       currency: currency,
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     });
     return formatter.format(price);
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('es-AR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(date).toLocaleDateString("es-AR", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const getEstadoColor = (estado) => {
     const colors = {
-      'Activo': 'bg-green-100 text-green-800',
-      'Reservado': 'bg-yellow-100 text-yellow-800',
-      'Vendido': 'bg-blue-100 text-blue-800',
-      'Pausado': 'bg-gray-100 text-gray-800'
+      Activo: "bg-green-100 text-green-800",
+      Reservado: "bg-yellow-100 text-yellow-800",
+      Vendido: "bg-blue-100 text-blue-800",
+      Pausado: "bg-gray-100 text-gray-800",
     };
-    return colors[estado] || 'bg-gray-100 text-gray-800';
+    return colors[estado] || "bg-gray-100 text-gray-800";
   };
 
   const convertGoogleDriveUrl = (url) => {
     // Convertir URLs de Google Drive al formato directo
-    if (url.includes('drive.google.com')) {
+    if (url.includes("drive.google.com")) {
       let fileId = null;
-      
+
       // Formato: https://drive.google.com/file/d/FILE_ID/view
       const fileIdMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
       if (fileIdMatch) {
         fileId = fileIdMatch[1];
       }
-      
+
       // Formato: https://drive.google.com/open?id=FILE_ID o uc?export=view&id=FILE_ID
       const openIdMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
       if (openIdMatch && !fileId) {
         fileId = openIdMatch[1];
       }
-      
+
       if (fileId) {
         // Usar formato thumbnail que es más confiable
         return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
       }
     }
-    
+
     return url;
   };
 
   const getImageUrl = (medias) => {
     if (!medias || medias.length === 0) return null;
-    
-    const principalMedia = medias.find(m => m.esPrincipal) || medias[0];
-    if (principalMedia.url.startsWith('http')) {
+
+    const principalMedia = medias.find((m) => m.esPrincipal) || medias[0];
+    if (principalMedia.url.startsWith("http")) {
       return convertGoogleDriveUrl(principalMedia.url);
     }
-    return `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5174'}${principalMedia.url}`;
+    return `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5174"}${
+      principalMedia.url
+    }`;
   };
 
   if (loading && (!propiedades || propiedades.length === 0)) {
@@ -148,7 +154,6 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
 
   return (
     <div className="space-y-6">
-
       {/* Barra de búsqueda y filtros */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="space-y-4">
@@ -162,7 +167,7 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyPress={(e) => e.key === "Enter" && handleSearch()}
                 placeholder="Buscar por código, dirección, barrio..."
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -186,10 +191,14 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Operación</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Operación
+                </label>
                 <select
                   value={filtros.operacion}
-                  onChange={(e) => handleFilterChange('operacion', e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange("operacion", e.target.value)
+                  }
                   className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="">Todas</option>
@@ -199,10 +208,12 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo
+                </label>
                 <select
                   value={filtros.tipo}
-                  onChange={(e) => handleFilterChange('tipo', e.target.value)}
+                  onChange={(e) => handleFilterChange("tipo", e.target.value)}
                   className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="">Todos</option>
@@ -215,10 +226,12 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Estado
+                </label>
                 <select
                   value={filtros.estado}
-                  onChange={(e) => handleFilterChange('estado', e.target.value)}
+                  onChange={(e) => handleFilterChange("estado", e.target.value)}
                   className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="">Todos</option>
@@ -230,11 +243,13 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Barrio</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Barrio
+                </label>
                 <input
                   type="text"
                   value={filtros.barrio}
-                  onChange={(e) => handleFilterChange('barrio', e.target.value)}
+                  onChange={(e) => handleFilterChange("barrio", e.target.value)}
                   placeholder="Filtrar por barrio"
                   className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
@@ -244,7 +259,7 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
                 <button
                   onClick={() => {
                     resetFiltros();
-                    setSearchTerm('');
+                    setSearchTerm("");
                     fetchPropiedades();
                   }}
                   className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
@@ -272,38 +287,50 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
 
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="grid gap-6 p-6">
-          {propiedades && propiedades.length > 0 ? propiedades.map((propiedad) => (
-            <div
-              key={propiedad.id}
-              className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
-            >
-              <div className="flex flex-col lg:flex-row">
-                {/* Imagen */}
-                <div className="lg:w-64 h-48 lg:h-auto bg-gray-100 flex-shrink-0">
-                  {getImageUrl(propiedad.medias) ? (
-                    <img
-                      src={getImageUrl(propiedad.medias)}
-                      alt={propiedad.titulo || propiedad.codigo}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const originalUrl = getImageUrl(propiedad.medias);
-                        console.log("❌ Error cargando imagen:", e.target.src);
-                        
-                        // Si es Google Drive thumbnail, probar con formato uc?export=view
-                        if (e.target.src.includes('thumbnail') && originalUrl.includes('drive.google.com')) {
-                          const fileIdMatch = originalUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-                          if (fileIdMatch) {
-                            const fileId = fileIdMatch[1];
-                            const alternativeUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-                            console.log("🔄 Probando formato alternativo:", alternativeUrl);
-                            e.target.src = alternativeUrl;
-                            return;
+          {propiedades && propiedades.length > 0 ? (
+            propiedades.map((propiedad) => (
+              <div
+                key={propiedad.id}
+                className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+              >
+                <div className="flex flex-col lg:flex-row">
+                  {/* Imagen */}
+                  <div className="lg:w-64 h-48 lg:h-auto bg-gray-100 flex-shrink-0">
+                    {getImageUrl(propiedad.medias) ? (
+                      <img
+                        src={getImageUrl(propiedad.medias)}
+                        alt={propiedad.titulo || propiedad.codigo}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const originalUrl = getImageUrl(propiedad.medias);
+                          console.log(
+                            "❌ Error cargando imagen:",
+                            e.target.src
+                          );
+
+                          // Si es Google Drive thumbnail, probar con formato uc?export=view
+                          if (
+                            e.target.src.includes("thumbnail") &&
+                            originalUrl.includes("drive.google.com")
+                          ) {
+                            const fileIdMatch = originalUrl.match(
+                              /[?&]id=([a-zA-Z0-9_-]+)/
+                            );
+                            if (fileIdMatch) {
+                              const fileId = fileIdMatch[1];
+                              const alternativeUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+                              console.log(
+                                "🔄 Probando formato alternativo:",
+                                alternativeUrl
+                              );
+                              e.target.src = alternativeUrl;
+                              return;
+                            }
                           }
-                        }
-                        
-                        // Si ya probó ambos formatos, mostrar placeholder
-                        e.target.style.display = 'none';
-                        e.target.parentNode.innerHTML = `
+
+                          // Si ya probó ambos formatos, mostrar placeholder
+                          e.target.style.display = "none";
+                          e.target.parentNode.innerHTML = `
                           <div class="w-full h-full flex items-center justify-center bg-gray-200">
                             <div class="text-center">
                               <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -314,148 +341,165 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
                             </div>
                           </div>
                         `;
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                      <div className="text-center">
-                        <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-                        <p className="mt-2 text-sm text-gray-500">Sin imagen</p>
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                        <div className="text-center">
+                          <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
+                          <p className="mt-2 text-sm text-gray-500">
+                            Sin imagen
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Contenido */}
+                  <div className="flex-1 p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {propiedad.titulo ||
+                              `${propiedad.tipo} en ${propiedad.barrio}`}
+                          </h3>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoColor(
+                              propiedad.estado
+                            )}`}
+                          >
+                            {propiedad.estado}
+                          </span>
+                          {propiedad.destacado && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                              ⭐ Destacado
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-sm text-gray-600 mb-1">
+                          Código: {propiedad.codigo}
+                        </p>
+
+                        <div className="flex items-center text-sm text-gray-600 mb-2">
+                          <MapPinIcon className="h-4 w-4 mr-1" />
+                          {propiedad.direccion}, {propiedad.barrio}
+                        </div>
+
+                        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+                          <div className="flex items-center">
+                            <HomeIcon className="h-4 w-4 mr-1" />
+                            {propiedad.ambientes} amb
+                          </div>
+                          {propiedad.dormitorios && (
+                            <div>🛏️ {propiedad.dormitorios} dorm</div>
+                          )}
+                          {propiedad.banos && (
+                            <div>🚿 {propiedad.banos} baños</div>
+                          )}
+                          {propiedad.metrosCubiertos && (
+                            <div>📐 {propiedad.metrosCubiertos} m²</div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center space-x-4 mb-3">
+                          <div className="flex items-center text-lg font-bold text-green-600">
+                            <CurrencyDollarIcon className="h-5 w-5 mr-1" />
+                            {formatPrice(propiedad.precio, propiedad.moneda)}
+                          </div>
+                          <span className="text-sm text-gray-500 capitalize">
+                            {propiedad.operacion}
+                          </span>
+                          {propiedad.expensas && (
+                            <span className="text-sm text-gray-500">
+                              +{" "}
+                              {formatPrice(
+                                propiedad.expensas,
+                                propiedad.moneda
+                              )}{" "}
+                              exp.
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center text-xs text-gray-500">
+                          <CalendarIcon className="h-4 w-4 mr-1" />
+                          Publicado: {formatDate(propiedad.fechaPublicacionUtc)}
+                        </div>
+                      </div>
+
+                      {/* Acciones */}
+                      <div className="flex space-x-2 ml-4">
+                        <button
+                          onClick={() => onView(propiedad)}
+                          className="p-2 text-gray-400 hover:text-gray-500"
+                          title="Ver detalle"
+                        >
+                          <EyeIcon className="h-5 w-5" />
+                        </button>
+
+                        {hasPermission("manage_propiedades") && (
+                          <>
+                            <button
+                              onClick={() => onEdit(propiedad)}
+                              className="p-2 text-blue-400 hover:text-blue-500"
+                              title="Editar"
+                            >
+                              <PencilIcon className="h-5 w-5" />
+                            </button>
+
+                            <button
+                              onClick={() => onDelete(propiedad)}
+                              className="p-2 text-red-400 hover:text-red-500"
+                              title="Eliminar"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
 
-                {/* Contenido */}
-                <div className="flex-1 p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {propiedad.titulo || `${propiedad.tipo} en ${propiedad.barrio}`}
-                        </h3>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoColor(propiedad.estado)}`}>
-                          {propiedad.estado}
+                    {/* Descripción */}
+                    {propiedad.descripcion && (
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                        {propiedad.descripcion}
+                      </p>
+                    )}
+
+                    {/* Badges de características */}
+                    <div className="flex flex-wrap gap-2">
+                      {propiedad.cochera && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          🚗 Cochera
                         </span>
-                        {propiedad.destacado && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            ⭐ Destacado
-                          </span>
-                        )}
-                      </div>
-                      
-                      <p className="text-sm text-gray-600 mb-1">Código: {propiedad.codigo}</p>
-                      
-                      <div className="flex items-center text-sm text-gray-600 mb-2">
-                        <MapPinIcon className="h-4 w-4 mr-1" />
-                        {propiedad.direccion}, {propiedad.barrio}
-                      </div>
-
-                      <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
-                        <div className="flex items-center">
-                          <HomeIcon className="h-4 w-4 mr-1" />
-                          {propiedad.ambientes} amb
-                        </div>
-                        {propiedad.dormitorios && (
-                          <div>🛏️ {propiedad.dormitorios} dorm</div>
-                        )}
-                        {propiedad.banos && (
-                          <div>🚿 {propiedad.banos} baños</div>
-                        )}
-                        {propiedad.metrosCubiertos && (
-                          <div>📐 {propiedad.metrosCubiertos} m²</div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center space-x-4 mb-3">
-                        <div className="flex items-center text-lg font-bold text-green-600">
-                          <CurrencyDollarIcon className="h-5 w-5 mr-1" />
-                          {formatPrice(propiedad.precio, propiedad.moneda)}
-                        </div>
-                        <span className="text-sm text-gray-500 capitalize">
-                          {propiedad.operacion}
+                      )}
+                      {propiedad.aptoCredito && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          💳 Apto Crédito
                         </span>
-                        {propiedad.expensas && (
-                          <span className="text-sm text-gray-500">
-                            + {formatPrice(propiedad.expensas, propiedad.moneda)} exp.
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center text-xs text-gray-500">
-                        <CalendarIcon className="h-4 w-4 mr-1" />
-                        Publicado: {formatDate(propiedad.fechaPublicacionUtc)}
-                      </div>
-                    </div>
-
-                    {/* Acciones */}
-                    <div className="flex space-x-2 ml-4">
-                      <button
-                        onClick={() => onView(propiedad)}
-                        className="p-2 text-gray-400 hover:text-gray-500"
-                        title="Ver detalle"
-                      >
-                        <EyeIcon className="h-5 w-5" />
-                      </button>
-                      
-                      {hasPermission('manage_propiedades') && (
-                        <>
-                          <button
-                            onClick={() => onEdit(propiedad)}
-                            className="p-2 text-blue-400 hover:text-blue-500"
-                            title="Editar"
-                          >
-                            <PencilIcon className="h-5 w-5" />
-                          </button>
-                          
-                          <button
-                            onClick={() => onDelete(propiedad)}
-                            className="p-2 text-red-400 hover:text-red-500"
-                            title="Eliminar"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        </>
+                      )}
+                      {propiedad.medias && propiedad.medias.length > 0 && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          <PhotoIcon className="h-3 w-3 mr-1" />
+                          {propiedad.medias.length} fotos
+                        </span>
                       )}
                     </div>
                   </div>
-
-                  {/* Descripción */}
-                  {propiedad.descripcion && (
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                      {propiedad.descripcion}
-                    </p>
-                  )}
-
-                  {/* Badges de características */}
-                  <div className="flex flex-wrap gap-2">
-                    {propiedad.cochera && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        🚗 Cochera
-                      </span>
-                    )}
-                    {propiedad.aptoCredito && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        💳 Apto Crédito
-                      </span>
-                    )}
-                    {propiedad.medias && propiedad.medias.length > 0 && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                        <PhotoIcon className="h-3 w-3 mr-1" />
-                        {propiedad.medias.length} fotos
-                      </span>
-                    )}
-                  </div>
                 </div>
               </div>
-            </div>
-          )) : (
+            ))
+          ) : (
             <div className="text-center py-8">
               <HomeIcon className="h-12 w-12 mx-auto text-gray-400" />
               <p className="mt-2 text-sm text-gray-500">
-                {loading ? 'Cargando propiedades...' : 'No hay propiedades disponibles'}
+                {loading
+                  ? "Cargando propiedades..."
+                  : "No hay propiedades disponibles"}
               </p>
-              {!loading && hasPermission('manage_propiedades') && (
+              {!loading && hasPermission("manage_propiedades") && (
                 <button
                   onClick={onCreate}
                   className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
@@ -487,24 +531,27 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
                 Siguiente
               </button>
             </div>
-            
+
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-700">
-                  Mostrando{' '}
+                  Mostrando{" "}
                   <span className="font-medium">
                     {(paginacion.currentPage - 1) * paginacion.pageSize + 1}
-                  </span>
-                  {' '}-{' '}
+                  </span>{" "}
+                  -{" "}
                   <span className="font-medium">
-                    {Math.min(paginacion.currentPage * paginacion.pageSize, paginacion.totalCount)}
-                  </span>
-                  {' '}de{' '}
-                  <span className="font-medium">{paginacion.totalCount}</span>
-                  {' '}resultados
+                    {Math.min(
+                      paginacion.currentPage * paginacion.pageSize,
+                      paginacion.totalCount
+                    )}
+                  </span>{" "}
+                  de{" "}
+                  <span className="font-medium">{paginacion.totalCount}</span>{" "}
+                  resultados
                 </p>
               </div>
-              
+
               <div>
                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                   <button
@@ -514,25 +561,27 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
                   >
                     <ChevronLeftIcon className="h-5 w-5" />
                   </button>
-                  
+
                   {/* Números de página */}
-                  {[...Array(Math.min(5, paginacion.totalPages))].map((_, i) => {
-                    const pageNumber = i + 1;
-                    return (
-                      <button
-                        key={pageNumber}
-                        onClick={() => handlePageChange(pageNumber)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          pageNumber === paginacion.currentPage
-                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                        }`}
-                      >
-                        {pageNumber}
-                      </button>
-                    );
-                  })}
-                  
+                  {[...Array(Math.min(5, paginacion.totalPages))].map(
+                    (_, i) => {
+                      const pageNumber = i + 1;
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => handlePageChange(pageNumber)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            pageNumber === paginacion.currentPage
+                              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                              : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    }
+                  )}
+
                   <button
                     onClick={() => handlePageChange(paginacion.currentPage + 1)}
                     disabled={paginacion.currentPage >= paginacion.totalPages}
@@ -547,29 +596,9 @@ const PropiedadesList = ({ onEdit, onView, onCreate, onDelete }) => {
         )}
       </div>
 
-      {propiedades && propiedades.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <HomeIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No se encontraron propiedades</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Intente ajustar los filtros o crear una nueva propiedad.
-          </p>
-          {hasPermission('manage_propiedades') && (
-            <div className="mt-6">
-              <button
-                onClick={onCreate}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Nueva Propiedad
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+    
     </div>
   );
 };
 
 export default PropiedadesList;
-
