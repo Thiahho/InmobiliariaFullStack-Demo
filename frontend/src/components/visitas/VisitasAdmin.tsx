@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   CalendarDaysIcon,
   ListBulletIcon,
@@ -9,14 +9,17 @@ import {
   CheckIcon,
   XMarkIcon,
   ClockIcon,
-  EnvelopeIcon
-} from '@heroicons/react/24/outline';
-import AgendaSemanal from './AgendaSemanal';
-import VisitaForm from './VisitaForm';
-import { useVisitasStore } from '../../store/visitasStore';
-import { toast } from 'react-hot-toast';
+  EnvelopeIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/24/outline";
+import AgendaSemanal from "./AgendaSemanal";
+import VisitaForm from "./VisitaForm";
+// Eliminamos modales específicos: usaremos el mismo formulario de edición
+import { useVisitasStore } from "../../store/visitasStore";
+import { useAuthStore } from "../../store/authStore";
+import { toast } from "react-hot-toast";
 
-type VistaActiva = 'agenda' | 'lista';
+type VistaActiva = "agenda" | "lista";
 
 interface Visita {
   id: number;
@@ -34,58 +37,75 @@ interface Visita {
 }
 
 export default function VisitasAdmin() {
-  const [vistaActiva, setVistaActiva] = useState<VistaActiva>('agenda');
+  const [vistaActiva, setVistaActiva] = useState<VistaActiva>("lista");
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [visitaEditando, setVisitaEditando] = useState<number | null>(null);
   const [fechaInicialForm, setFechaInicialForm] = useState<Date | undefined>();
-  const [agenteInicialForm, setAgenteInicialForm] = useState<number | undefined>();
-  const [agenteSeleccionado, setAgenteSeleccionado] = useState<number | null>(null);
-  const [estadoFiltro, setEstadoFiltro] = useState<string>('');
-  const [visitasSeleccionadas, setVisitasSeleccionadas] = useState<number[]>([]);
+  const [agenteInicialForm, setAgenteInicialForm] = useState<
+    number | undefined
+  >();
+  const [agenteSeleccionado, setAgenteSeleccionado] = useState<number | null>(
+    null
+  );
+  const [estadoFiltro, setEstadoFiltro] = useState<string>("");
+  const [visitasSeleccionadas, setVisitasSeleccionadas] = useState<number[]>(
+    []
+  );
+  // Eliminamos estados de modales de cancelar/reagendar
 
   // CORRECCIÓN: Usar el store de manera memoizada para evitar loops
-  const visitas = useVisitasStore(state => state.visitas);
-  const agentes = useVisitasStore(state => state.agentes);
-  const loading = useVisitasStore(state => state.loading);
-  const error = useVisitasStore(state => state.error);
-  
-  // Debug: log de visitas
-  console.log('📋 VisitasAdmin - Cantidad de visitas en store:', visitas.length);
-  console.log('📋 VisitasAdmin - Vista activa:', vistaActiva);
-  if (visitas.length > 0) {
-    console.log('📋 VisitasAdmin - Fechas de las visitas:', visitas.map((v: any) => ({ id: v.id, fecha: v.fechaHora })));
-    console.log('📋 VisitasAdmin - Visita completa:', visitas[0]);
-  }
-  const confirmarVisita = useVisitasStore(state => state.confirmarVisita);
-  const cancelarVisita = useVisitasStore(state => state.cancelarVisita);
-  const marcarRealizada = useVisitasStore(state => state.marcarRealizada);
-  const accionMasiva = useVisitasStore(state => state.accionMasiva);
-  const enviarNotificacion = useVisitasStore(state => state.enviarNotificacion);
-  const descargarICS = useVisitasStore(state => state.descargarICS);
-  const setFiltros = useVisitasStore(state => state.setFiltros);
-  const clearError = useVisitasStore(state => state.clearError);
+  const visitas = useVisitasStore((state) => state.visitas);
+  const agentes = useVisitasStore((state) => state.agentes);
+  const loading = useVisitasStore((state) => state.loading);
+  const error = useVisitasStore((state) => state.error);
+
+  const confirmarVisita = useVisitasStore((state) => state.confirmarVisita);
+  const cancelarVisita = useVisitasStore((state) => state.cancelarVisita);
+  const marcarRealizada = useVisitasStore((state) => state.marcarRealizada);
+  const accionMasiva = useVisitasStore((state) => state.accionMasiva);
+  const enviarNotificacion = useVisitasStore(
+    (state) => state.enviarNotificacion
+  );
+  const descargarICS = useVisitasStore((state) => state.descargarICS);
+  const setFiltros = useVisitasStore((state) => state.setFiltros);
+  const clearError = useVisitasStore((state) => state.clearError);
+
+  // Auth state
+  const { isAuthenticated, isInitialized } = useAuthStore();
 
   // CORRECCIÓN: Funciones memoizadas para evitar recreación
   const cargarDatos = useCallback(() => {
+    console.log('🚀 cargarDatos ejecutándose, isAuthenticated:', isAuthenticated);
+    if (!isAuthenticated) {
+      console.log('❌ Usuario no autenticado, no se cargan datos');
+      return;
+    }
+    console.log('✅ Cargando agentes...');
     const state = useVisitasStore.getState();
     state.cargarAgentes();
-    state.cargarVisitas();
-  }, []);
+  }, [isAuthenticated]);
 
-  // CORRECCIÓN: useEffect con función memoizada
+  // Cargar datos cuando el usuario esté autenticado
+  const initializedRef = useRef(false);
   useEffect(() => {
+    console.log('🔍 VisitasAdmin useEffect:', { isInitialized, isAuthenticated, hasInitialized: initializedRef.current });
+    if (!isInitialized || !isAuthenticated || initializedRef.current) return;
+    console.log('✅ Ejecutando cargarDatos en VisitasAdmin');
+    initializedRef.current = true;
     cargarDatos();
-  }, [cargarDatos]);
+  }, [cargarDatos, isInitialized, isAuthenticated]);
 
-  // Aplicar filtros cuando cambien
-  useEffect(() => {
-    const state = useVisitasStore.getState();
-    state.setFiltros({
-      agenteId: agenteSeleccionado,
-      estado: estadoFiltro || undefined
-    });
-    state.cargarVisitas();
-  }, [agenteSeleccionado, estadoFiltro]);
+  // TEMPORALMENTE DESHABILITADO - Cargar visitas solo cuando cambie la vista a lista o cambien filtros en vista lista
+  // useEffect(() => {
+  //   if (vistaActiva === "lista") {
+  //     const state = useVisitasStore.getState();
+  //     state.setFiltros({
+  //       agenteId: agenteSeleccionado,
+  //       estado: estadoFiltro || undefined,
+  //     });
+  //     state.cargarVisitas();
+  //   }
+  // }, [vistaActiva, agenteSeleccionado, estadoFiltro]);
 
   // Manejar apertura de formulario para nueva visita
   const handleNuevaVisita = (fecha?: Date, agenteId?: number) => {
@@ -106,7 +126,7 @@ export default function VisitasAdmin() {
   // Manejar éxito del formulario
   const handleFormularioExito = () => {
     // No necesitamos recargar las visitas porque el store ya actualiza la lista localmente
-    console.log('🎉 Formulario completado exitosamente');
+    console.log("🎉 Formulario completado exitosamente");
     setMostrarFormulario(false);
   };
 
@@ -114,61 +134,85 @@ export default function VisitasAdmin() {
   const handleConfirmarVisita = async (visitaId: number) => {
     try {
       await confirmarVisita(visitaId);
-      toast.success('Visita confirmada correctamente');
+      toast.success("Visita confirmada correctamente");
     } catch (error) {
-      toast.error('Error al confirmar la visita');
+      toast.error("Error al confirmar la visita");
     }
   };
 
-  const handleCancelarVisita = async (visitaId: number) => {
-    const motivo = prompt('Motivo de la cancelación:');
-    if (!motivo) return;
+  const handleCancelarVisita = (visitaId: number) => {
+    // Abrimos el mismo formulario de edición para gestionar la cancelación
+    setVisitaEditando(visitaId);
+    setFechaInicialForm(undefined);
+    setAgenteInicialForm(undefined);
+    setMostrarFormulario(true);
+  };
 
+  // Cancelación directa desde el formulario de edición (sin modal separado)
+  const confirmarCancelacion = async (_motivo: string) => {
+    if (!visitaEditando) return;
     try {
-      await cancelarVisita(visitaId, motivo);
-      toast.success('Visita cancelada correctamente');
+      await cancelarVisita(visitaEditando, _motivo);
+      toast.success("Visita cancelada correctamente");
+      setMostrarFormulario(false);
+      setVisitaEditando(null);
     } catch (error) {
-      toast.error('Error al cancelar la visita');
+      toast.error("Error al cancelar la visita");
+      throw error;
+    }
+  };
+
+  const handleReagendarVisita = (visitaId: number) => {
+    // Usamos el formulario de edición para que el usuario cambie fecha/hora
+    setVisitaEditando(visitaId);
+    setFechaInicialForm(undefined);
+    setAgenteInicialForm(undefined);
+    setMostrarFormulario(true);
+  };
+
+  const confirmarReagendamiento = async (nuevaFecha: Date) => {
+    if (!visitaEditando) return;
+    try {
+      const state = useVisitasStore.getState();
+      await state.reagendarVisita(visitaEditando, nuevaFecha);
+      toast.success("Visita reagendada correctamente");
+      setMostrarFormulario(false);
+      setVisitaEditando(null);
+    } catch (error) {
+      toast.error("Error al reagendar la visita");
+      throw error;
     }
   };
 
   const handleMarcarRealizada = async (visitaId: number) => {
-    const notas = prompt('Notas de la visita (opcional):');
+    const notas = ""; // Sin prompt; se podría incorporar en el formulario si se requiere
 
     try {
-      await marcarRealizada(visitaId, notas || '');
-      toast.success('Visita marcada como realizada');
+      await marcarRealizada(visitaId, notas);
+      toast.success("Visita marcada como realizada");
     } catch (error) {
-      toast.error('Error al marcar la visita como realizada');
+      toast.error("Error al marcar la visita como realizada");
     }
   };
 
   // Acciones masivas
   const handleAccionMasiva = async (accion: string) => {
     if (visitasSeleccionadas.length === 0) {
-      toast.error('Selecciona al menos una visita');
+      toast.error("Selecciona al menos una visita");
       return;
     }
 
-    let options = {};
-    
-    if (accion === 'Cancelar') {
-      const motivo = prompt('Motivo de la cancelación:');
-      if (!motivo) return;
-      options = { motivo };
-    } else if (accion === 'Reagendar') {
-      const fechaStr = prompt('Nueva fecha (YYYY-MM-DD HH:MM):');
-      if (!fechaStr) return;
-      const nuevaFecha = new Date(fechaStr);
-      if (isNaN(nuevaFecha.getTime())) {
-        toast.error('Fecha inválida');
-        return;
-      }
-      options = { nuevaFecha };
+    // En lugar de prompts/modales, abrimos el formulario de la primera visita seleccionada
+    const primera = visitasSeleccionadas[0];
+    if (accion === "Cancelar" || accion === "Reagendar") {
+      setVisitaEditando(primera);
+      setMostrarFormulario(true);
+      return;
     }
 
+    // Para otras acciones masivas (ej. Confirmar) mantenemos flujo automático
     try {
-      await accionMasiva(visitasSeleccionadas, accion, options);
+      await accionMasiva(visitasSeleccionadas, accion, {});
       setVisitasSeleccionadas([]);
       toast.success(`Acción "${accion}" aplicada correctamente`);
     } catch (error) {
@@ -179,9 +223,9 @@ export default function VisitasAdmin() {
   // Manejar selección de visitas
   const handleSeleccionarVisita = (visitaId: number, seleccionada: boolean) => {
     if (seleccionada) {
-      setVisitasSeleccionadas(prev => [...prev, visitaId]);
+      setVisitasSeleccionadas((prev) => [...prev, visitaId]);
     } else {
-      setVisitasSeleccionadas(prev => prev.filter(id => id !== visitaId));
+      setVisitasSeleccionadas((prev) => prev.filter((id) => id !== visitaId));
     }
   };
 
@@ -200,7 +244,9 @@ export default function VisitasAdmin() {
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Gestión de Visitas</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Gestión de Visitas
+              </h1>
               <p className="text-gray-600 mt-1">
                 Administra las visitas a propiedades
               </p>
@@ -218,24 +264,22 @@ export default function VisitasAdmin() {
           {/* Toggle de vista */}
           <div className="flex space-x-2 mt-6">
             <button
-              onClick={() => setVistaActiva('agenda')}
-              className={`flex items-center px-4 py-2 rounded-lg border transition-colors ${
-                vistaActiva === 'agenda'
-                  ? 'bg-blue-500 text-white border-blue-500'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
+              onClick={() => setVistaActiva("agenda")}
+              className={`flex items-center px-4 py-2 rounded-lg border transition-colors ${vistaActiva === "agenda"
+                ? "bg-blue-500 text-white border-blue-500"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                }`}
             >
               <CalendarDaysIcon className="w-5 h-5 mr-2" />
               Agenda
             </button>
 
             <button
-              onClick={() => setVistaActiva('lista')}
-              className={`flex items-center px-4 py-2 rounded-lg border transition-colors ${
-                vistaActiva === 'lista'
-                  ? 'bg-blue-500 text-white border-blue-500'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
+              onClick={() => setVistaActiva("lista")}
+              className={`flex items-center px-4 py-2 rounded-lg border transition-colors ${vistaActiva === "lista"
+                ? "bg-blue-500 text-white border-blue-500"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                }`}
             >
               <ListBulletIcon className="w-5 h-5 mr-2" />
               Lista
@@ -250,11 +294,15 @@ export default function VisitasAdmin() {
 
             {/* Filtro por agente */}
             <select
-              value={agenteSeleccionado || ''}
-              onChange={(e) => setAgenteSeleccionado(e.target.value ? Number(e.target.value) : null)}
+              value={agenteSeleccionado === null ? "todos" : agenteSeleccionado.toString()}
+              onChange={(e) =>
+                setAgenteSeleccionado(
+                  e.target.value === "todos" ? null : Number(e.target.value)
+                )
+              }
               className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Todos los agentes</option>
+              <option value="todos">Todos los agentes</option>
               {agentes.map((agente: any) => (
                 <option key={agente.id} value={agente.id}>
                   {agente.nombre}
@@ -284,7 +332,7 @@ export default function VisitasAdmin() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <span className="ml-3 text-gray-600">Cargando visitas...</span>
             </div>
-          ) : vistaActiva === 'agenda' ? (
+          ) : vistaActiva === "agenda" ? (
             <AgendaSemanal
               onNuevaVisita={handleNuevaVisita}
               onEditarVisita={handleEditarVisita}
@@ -301,19 +349,19 @@ export default function VisitasAdmin() {
                     </span>
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => handleAccionMasiva('Confirmar')}
+                        onClick={() => handleAccionMasiva("Confirmar")}
                         className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
                       >
                         Confirmar
                       </button>
                       <button
-                        onClick={() => handleAccionMasiva('Cancelar')}
+                        onClick={() => handleAccionMasiva("Cancelar")}
                         className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
                       >
                         Cancelar
                       </button>
                       <button
-                        onClick={() => handleAccionMasiva('Reagendar')}
+                        onClick={() => handleAccionMasiva("Reagendar")}
                         className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                       >
                         Reagendar
@@ -337,83 +385,110 @@ export default function VisitasAdmin() {
               ) : (
                 <div className="space-y-4">
                   {visitas.map((visita: any) => {
-                    console.log('🔍 Renderizando visita:', visita);
+                    console.log("🔍 Renderizando visita:", visita);
                     return (
-                    <div key={visita.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-start space-x-3 flex-1">
-                          <input
-                            type="checkbox"
-                            checked={visitasSeleccionadas.includes(visita.id)}
-                            onChange={(e) => handleSeleccionarVisita(visita.id, e.target.checked)}
-                            className="mt-1 rounded border-gray-300"
-                          />
-                          <div className="flex-1">
-                            <h4 className="text-lg font-semibold text-gray-900">
-                              {visita.propiedadCodigo} - {visita.propiedadDireccion}
-                            </h4>
-                            <p className="text-gray-600">
-                              Cliente: {visita.clienteNombre}
-                            </p>
-                            <p className="text-gray-600">
-                              Agente: {visita.agenteNombre}
-                            </p>
-                            <p className="text-gray-600">
-                              Fecha: {new Date(visita.fechaHora).toLocaleString()}
-                            </p>
+                      <div
+                        key={visita.id}
+                        className="border border-gray-200 rounded-lg p-4"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-start space-x-3 flex-1">
+                            <input
+                              type="checkbox"
+                              checked={visitasSeleccionadas.includes(visita.id)}
+                              onChange={(e) =>
+                                handleSeleccionarVisita(
+                                  visita.id,
+                                  e.target.checked
+                                )
+                              }
+                              className="mt-1 rounded border-gray-300"
+                            />
+                            <div className="flex-1">
+                              <h4 className="text-lg font-semibold text-gray-900">
+                                {visita.propiedadCodigo} -{" "}
+                                {visita.propiedadDireccion}
+                              </h4>
+                              <p className="text-gray-600">
+                                Cliente: {visita.clienteNombre}
+                              </p>
+                              <p className="text-gray-600">
+                                Agente: {visita.agenteNombre}
+                              </p>
+                              <p className="text-gray-600">
+                                Fecha:{" "}
+                                {new Date(visita.fechaHora).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${visita.estado === "Confirmada"
+                                ? "bg-green-100 text-green-800"
+                                : visita.estado === "Pendiente"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : visita.estado === "Realizada"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                            >
+                              {visita.estado}
+                            </span>
+
+                            <button
+                              onClick={() => handleEditarVisita(visita.id)}
+                              className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded border border-blue-200"
+                              title="Editar"
+                            >
+                              Editar
+                            </button>
+
+                            {visita.estado === "Pendiente" && (
+                              <button
+                                onClick={() => handleConfirmarVisita(visita.id)}
+                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
+                                title="Confirmar"
+                              >
+                                <CheckIcon className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {visita.estado === "Confirmada" && (
+                              <button
+                                onClick={() => handleMarcarRealizada(visita.id)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                                title="Marcar como realizada"
+                              >
+                                <ClockIcon className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {visita.estado !== "Realizada" &&
+                              visita.estado !== "Cancelada" && (
+                                <button
+                                  onClick={() =>
+                                    handleReagendarVisita(visita.id)
+                                  }
+                                  className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg"
+                                  title="Reagendar"
+                                >
+                                  <ArrowPathIcon className="w-4 h-4" />
+                                </button>
+                              )}
+
+                            {visita.estado !== "Realizada" && (
+                              <button
+                                onClick={() => handleCancelarVisita(visita.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                title="Cancelar"
+                              >
+                                <XMarkIcon className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         </div>
-
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            visita.estado === 'Confirmada' ? 'bg-green-100 text-green-800' :
-                            visita.estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' :
-                            visita.estado === 'Realizada' ? 'bg-blue-100 text-blue-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {visita.estado}
-                          </span>
-
-                          <button
-                            onClick={() => handleEditarVisita(visita.id)}
-                            className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded border border-blue-200"
-                            title="Editar"
-                          >
-                            Editar
-                          </button>
-
-                          {visita.estado === 'Pendiente' && (
-                            <button
-                              onClick={() => handleConfirmarVisita(visita.id)}
-                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
-                              title="Confirmar"
-                            >
-                              <CheckIcon className="w-4 h-4" />
-                            </button>
-                          )}
-
-                          {visita.estado === 'Confirmada' && (
-                            <button
-                              onClick={() => handleMarcarRealizada(visita.id)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                              title="Marcar como realizada"
-                            >
-                              <ClockIcon className="w-4 h-4" />
-                            </button>
-                          )}
-
-                          {visita.estado !== 'Realizada' && (
-                            <button
-                              onClick={() => handleCancelarVisita(visita.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                              title="Cancelar"
-                            >
-                              <XMarkIcon className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
                       </div>
-                    </div>
                     );
                   })}
                 </div>
@@ -431,6 +506,8 @@ export default function VisitasAdmin() {
           agenteInicial={agenteInicialForm}
           visitaId={visitaEditando || undefined}
         />
+
+        {/* Sin modales adicionales: reagendar/cancelar usan el mismo formulario de edición */}
       </div>
     </div>
   );

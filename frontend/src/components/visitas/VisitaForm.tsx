@@ -5,12 +5,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { 
-  UserIcon, 
-  ClockIcon, 
+import {
+  UserIcon,
+  ClockIcon,
   ExclamationTriangleIcon,
   XMarkIcon,
-  CalendarIcon 
+  CalendarIcon
 } from '@heroicons/react/24/outline';
 import { useVisitasStore } from '../../store/visitasStore';
 import { usePropiedadesStore } from '../../store/propiedadesStore';
@@ -56,13 +56,13 @@ interface Lead {
   propiedadId: number;
 }
 
-export default function VisitaForm({ 
-  isOpen, 
-  onClose, 
-  onSuccess, 
-  fechaInicial, 
+export default function VisitaForm({
+  isOpen,
+  onClose,
+  onSuccess,
+  fechaInicial,
   agenteInicial,
-  visitaId 
+  visitaId
 }: VisitaFormProps) {
   const [propiedadSeleccionada, setPropiedadSeleccionada] = useState<Propiedad | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -72,20 +72,22 @@ export default function VisitaForm({
   const [validandoConflicto, setValidandoConflicto] = useState(false);
   const [ultimaValidacion, setUltimaValidacion] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
+  const [motivoCancelacion, setMotivoCancelacion] = useState<string>('');
 
   // CORRECCIÓN: Usar selectores individuales para evitar loops
   const crearVisita = useVisitasStore(state => state.crearVisita);
   const actualizarVisita = useVisitasStore(state => state.actualizarVisita);
   const obtenerVisita = useVisitasStore(state => state.obtenerVisita);
   const validarConflicto = useVisitasStore(state => state.validarConflicto);
+  const cancelarVisita = useVisitasStore(state => state.cancelarVisita);
   const agentes = useVisitasStore(state => state.agentes);
   const loading = useVisitasStore(state => state.loading);
   const setLoading = useVisitasStore(state => state.setLoading);
 
   // Store de propiedades
-  const { 
-    propiedades, 
-    fetchPropiedades 
+  const {
+    propiedades,
+    fetchPropiedades
   } = usePropiedadesStore();
 
   const {
@@ -130,7 +132,7 @@ export default function VisitaForm({
       state.setLoading(false);
       state.clearError();
       console.log('🔍 Estado loading después del reset:', useVisitasStore.getState().loading);
-      
+
       console.log('VisitaForm: Cargando datos iniciales...');
       console.log('🔍 Estado inicial del formulario:', {
         errors,
@@ -140,7 +142,7 @@ export default function VisitaForm({
         agentesLength: agentes.length,
         propiedadesLength: propiedades.length
       });
-      
+
       console.log('Agentes actuales en store:', state.agentes);
 
       state.cargarAgentes().then(() => {
@@ -165,7 +167,7 @@ export default function VisitaForm({
   // Cargar visita para edición
   const cargarVisitaParaEdicion = async () => {
     if (!visitaId) return;
-    
+
     try {
       const visita = await obtenerVisita(visitaId);
       reset({
@@ -264,7 +266,7 @@ export default function VisitaForm({
   // Enviar formulario
   const onSubmit = async (data: VisitaFormData) => {
     console.log('📝 Enviando formulario con datos:', data);
-    
+
     // Solo mostrar advertencia si hay conflicto, pero permitir continuar
     if (conflictoDetectado) {
       const confirmar = window.confirm(
@@ -282,7 +284,7 @@ export default function VisitaForm({
     const timeoutId = setTimeout(() => {
       console.error('⏰ Timeout: La operación está tardando demasiado');
       toast.error('La operación está tardando demasiado. Por favor, intenta de nuevo.');
-      
+
       // Resetear estados
       setSubmitting(false);
       const state = useVisitasStore.getState();
@@ -291,7 +293,7 @@ export default function VisitaForm({
 
     try {
       console.log('🚀 Iniciando creación/actualización de visita...');
-      
+
       if (visitaId) {
         console.log('📝 Actualizando visita existente:', visitaId);
         await actualizarVisita(visitaId, data);
@@ -315,16 +317,16 @@ export default function VisitaForm({
         status: error?.response?.status,
         data: error?.response?.data
       });
-      
+
       // Log específico para errores de validación
       if (error?.response?.status === 400 && error?.response?.data?.errors) {
         console.error('❌ Errores de validación específicos:', error.response.data.errors);
-        
+
         // Mostrar errores de validación específicos
         const validationErrors = Object.entries(error.response.data.errors)
           .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
           .join('\n');
-        
+
         toast.error(`Errores de validación:\n${validationErrors}`);
       } else {
         const errorMsg = error?.response?.data?.message || error?.message || 'Error al guardar la visita';
@@ -334,6 +336,23 @@ export default function VisitaForm({
       // Limpiar estados
       setSubmitting(false);
       clearTimeout(timeoutId);
+    }
+  };
+
+  // Cancelar visita desde el propio formulario (sin prompt)
+  const onCancelarVisita = async () => {
+    if (!visitaId) return;
+    if (!motivoCancelacion || motivoCancelacion.trim().length === 0) {
+      toast.error('Ingresa un motivo de cancelación');
+      return;
+    }
+    try {
+      await cancelarVisita(visitaId, motivoCancelacion.trim());
+      toast.success('Visita cancelada correctamente');
+      onSuccess();
+      onClose();
+    } catch (error) {
+      toast.error('Error al cancelar la visita');
     }
   };
 
@@ -418,11 +437,10 @@ export default function VisitaForm({
                     setMostrarFormularioCliente(false);
                     if (leadSeleccionado) seleccionarLead(leadSeleccionado);
                   }}
-                  className={`px-3 py-1 text-sm rounded-md ${
-                    !mostrarFormularioCliente 
-                      ? 'bg-blue-100 text-blue-700' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-1 text-sm rounded-md ${!mostrarFormularioCliente
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Lead Existente
                 </button>
@@ -435,11 +453,10 @@ export default function VisitaForm({
                     setValue('clienteEmail', '');
                     setValue('clienteTelefono', '');
                   }}
-                  className={`px-3 py-1 text-sm rounded-md ${
-                    mostrarFormularioCliente 
-                      ? 'bg-blue-100 text-blue-700' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-1 text-sm rounded-md ${mostrarFormularioCliente
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Cliente Nuevo
                 </button>
@@ -453,11 +470,10 @@ export default function VisitaForm({
                       key={lead.id}
                       type="button"
                       onClick={() => seleccionarLead(lead)}
-                      className={`w-full p-3 text-left border rounded-md hover:bg-gray-50 ${
-                        leadSeleccionado?.id === lead.id 
-                          ? 'border-blue-300 bg-blue-50' 
-                          : 'border-gray-200'
-                      }`}
+                      className={`w-full p-3 text-left border rounded-md hover:bg-gray-50 ${leadSeleccionado?.id === lead.id
+                        ? 'border-blue-300 bg-blue-50'
+                        : 'border-gray-200'
+                        }`}
                     >
                       <div className="font-medium">{lead.nombre}</div>
                       <div className="text-sm text-gray-600">{lead.email}</div>
@@ -580,12 +596,10 @@ export default function VisitaForm({
 
           {/* Alerta de conflicto */}
           {(conflictoDetectado || validandoConflicto) && (
-            <div className={`p-4 rounded-md flex items-start space-x-3 ${
-              conflictoDetectado ? 'bg-red-50 border border-red-200' : 'bg-yellow-50 border border-yellow-200'
-            }`}>
-              <ExclamationTriangleIcon className={`w-5 h-5 mt-0.5 ${
-                conflictoDetectado ? 'text-red-400' : 'text-yellow-400'
-              }`} />
+            <div className={`p-4 rounded-md flex items-start space-x-3 ${conflictoDetectado ? 'bg-red-50 border border-red-200' : 'bg-yellow-50 border border-yellow-200'
+              }`}>
+              <ExclamationTriangleIcon className={`w-5 h-5 mt-0.5 ${conflictoDetectado ? 'text-red-400' : 'text-yellow-400'
+                }`} />
               <div className="text-sm">
                 {validandoConflicto ? (
                   <span className="text-yellow-700">Validando disponibilidad...</span>
@@ -612,28 +626,51 @@ export default function VisitaForm({
           </div>
 
           {/* Botones */}
-          <div className="flex justify-end space-x-3 pt-4 border-t">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              onClick={() => console.log('🔘 Botón clickeado - Estado submitting:', submitting, 'loading:', loading)}
-              className={`px-4 py-2 text-sm font-medium text-white rounded-md ${
-                submitting
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-4 border-t">
+            {visitaId && (
+              <div className="w-full sm:w-auto">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Motivo de cancelación</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={motivoCancelacion}
+                    onChange={(e) => setMotivoCancelacion(e.target.value)}
+                    placeholder="Motivo..."
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 min-w-[200px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={onCancelarVisita}
+                    className="px-4 py-2 text-sm font-medium text-white rounded-md bg-red-600 hover:bg-red-700"
+                  >
+                    Cancelar visita
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3 ml-auto">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                onClick={() => console.log('🔘 Botón clickeado - Estado submitting:', submitting, 'loading:', loading)}
+                className={`px-4 py-2 text-sm font-medium text-white rounded-md ${submitting
                   ? 'bg-gray-400 cursor-not-allowed'
                   : conflictoDetectado
-                  ? 'bg-orange-600 hover:bg-orange-700'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              }`}
-            >
-              {submitting ? 'Guardando...' : (conflictoDetectado ? '⚠️ Crear con Conflicto' : (visitaId ? 'Actualizar' : 'Crear Visita'))}
-            </button>
+                    ? 'bg-orange-600 hover:bg-orange-700'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+              >
+                {submitting ? 'Guardando...' : (conflictoDetectado ? '⚠️ Crear con Conflicto' : (visitaId ? 'Actualizar' : 'Crear Visita'))}
+              </button>
+            </div>
           </div>
         </form>
       </div>

@@ -47,25 +47,68 @@ export const useVisitasStore = create((set, get) => ({
       const { filtros } = get();
       const params = new URLSearchParams();
       
+      // Para cargar todas las visitas, usamos un rango de fechas amplio si no está especificado
+      if (!filtros.fechaDesde) {
+        const haceUnMes = new Date();
+        haceUnMes.setMonth(haceUnMes.getMonth() - 1);
+        params.append('fechaDesde', haceUnMes.toISOString());
+      }
+      
+      if (!filtros.fechaHasta) {
+        const enTresMeses = new Date();
+        enTresMeses.setMonth(enTresMeses.getMonth() + 3);
+        params.append('fechaHasta', enTresMeses.toISOString());
+      }
+      
       Object.entries(filtros).forEach(([key, value]) => {
         if (value !== null && value !== '' && value !== undefined) {
           if (value instanceof Date) {
             params.append(key, value.toISOString());
-          } else {
+          } else if (key === 'agenteId' && value) {
             params.append(key, value.toString());
           }
         }
       });
 
-      const response = await axiosClient.get(`/visita?${params}`);
+      // Usar el endpoint de calendar que funciona
+      const response = await axiosClient.get(`/visita/calendar?${params}`);
+      
+      // Transformar datos del formato calendar al formato esperado por el componente
+      const visitasTransformadas = (response.data || []).map(visita => {
+        // Extraer información del description
+        const lines = visita.description?.split('\n') || [];
+        const clienteLine = lines.find(line => line.startsWith('Cliente:'));
+        const propiedadLine = lines.find(line => line.startsWith('Propiedad:'));
+        const agenteLine = lines.find(line => line.startsWith('Agente:'));
+        
+        // Extraer código de propiedad del title
+        const codigoMatch = visita.title?.match(/- (\d+)$/);
+        
+        return {
+          id: visita.id,
+          propiedadCodigo: codigoMatch ? codigoMatch[1] : 'N/A',
+          propiedadDireccion: propiedadLine ? propiedadLine.replace('Propiedad: ', '') : 'N/A',
+          clienteNombre: clienteLine ? clienteLine.replace('Cliente: ', '') : 'N/A',
+          clienteTelefono: '',
+          clienteEmail: '',
+          agenteNombre: agenteLine ? agenteLine.replace('Agente: ', '') : 'N/A',
+          fechaHora: visita.start,
+          duracionMinutos: visita.end && visita.start ? 
+            Math.round((new Date(visita.end) - new Date(visita.start)) / (1000 * 60)) : 60,
+          estado: visita.estado || 'Pendiente',
+          observaciones: '',
+          fechaCreacion: visita.start
+        };
+      });
       
       set({
-        visitas: response.data.visitas,
-        totalCount: response.data.totalCount,
-        totalPages: response.data.totalPages,
+        visitas: visitasTransformadas,
+        totalCount: visitasTransformadas.length,
+        totalPages: 1,
         loading: false
       });
     } catch (error) {
+      console.error('Error cargando visitas:', error);
       set({ 
         error: error.response?.data?.message || 'Error al cargar visitas',
         loading: false
@@ -75,6 +118,7 @@ export const useVisitasStore = create((set, get) => ({
 
   // Cargar visitas para calendario
   cargarVisitasCalendario: async (agenteId = null, fechaDesde = null, fechaHasta = null) => {
+    console.log('🔄 Iniciando cargarVisitasCalendario...', { agenteId, fechaDesde, fechaHasta });
     set({ loading: true, error: null });
     try {
       const params = new URLSearchParams();
@@ -82,8 +126,33 @@ export const useVisitasStore = create((set, get) => ({
       if (fechaDesde) params.append('fechaDesde', fechaDesde.toISOString());
       if (fechaHasta) params.append('fechaHasta', fechaHasta.toISOString());
 
-      const response = await axiosClient.get(`/visita/calendar?${params}`);
-      return response.data;
+      const url = `/visita/calendar?${params}`;
+      console.log('📡 Haciendo llamada a:', url);
+      const response = await axiosClient.get(url);
+      console.log('✅ Respuesta recibida:', response.data);
+      const raw = response.data || [];
+
+      // Normalizar claves (Start/End/Estado -> start/end/estado) y asegurar strings ISO
+      const normalized = raw.map((v) => {
+        const start = v.start || v.Start || v.fechaInicio || v.FechaInicio;
+        const end = v.end || v.End || v.fechaFin || v.FechaFin;
+        return {
+          id: v.id || v.Id,
+          title: v.title || v.Title || '',
+          start: typeof start === 'string' ? start : (start instanceof Date ? start.toISOString() : ''),
+          end: typeof end === 'string' ? end : (end instanceof Date ? end.toISOString() : ''),
+          color: v.color || v.Color || '#007bff',
+          estado: v.estado || v.Estado || 'Pendiente',
+          description: v.description || v.Description,
+          propiedadCodigo: v.propiedadCodigo || v.PropiedadCodigo,
+          clienteNombre: v.clienteNombre || v.ClienteNombre,
+          agenteId: v.agenteId || v.AgenteId,
+          agenteNombre: v.agenteNombre || v.AgenteNombre,
+        };
+      });
+
+      set({ loading: false });
+      return normalized;
     } catch (error) {
       set({ 
         error: error.response?.data?.message || 'Error al cargar calendario',
@@ -224,7 +293,7 @@ export const useVisitasStore = create((set, get) => ({
   confirmarVisita: async (id) => {
     set({ loading: true, error: null });
     try {
-      const response = await axiosClient.post(`/visita/${id}/confirmar`);
+      const response = await axiosClient.patch(`/visita/${id}/confirmar`);
       
       // Actualizar lista local
       set((state) => ({
@@ -245,7 +314,7 @@ export const useVisitasStore = create((set, get) => ({
   cancelarVisita: async (id, motivo) => {
     set({ loading: true, error: null });
     try {
-      const response = await axiosClient.post(`/visita/${id}/cancelar`, { motivo });
+      const response = await axiosClient.patch(`/visita/${id}/cancelar`, motivo);
       
       // Actualizar lista local
       set((state) => ({
@@ -266,7 +335,7 @@ export const useVisitasStore = create((set, get) => ({
   reagendarVisita: async (id, nuevaFecha) => {
     set({ loading: true, error: null });
     try {
-      const response = await axiosClient.post(`/visita/${id}/reagendar`, { nuevaFecha });
+      const response = await axiosClient.patch(`/visita/${id}/reagendar`, (nuevaFecha instanceof Date ? nuevaFecha.toISOString() : nuevaFecha));
       
       // Actualizar lista local
       set((state) => ({
@@ -287,7 +356,7 @@ export const useVisitasStore = create((set, get) => ({
   marcarRealizada: async (id, notas = '') => {
     set({ loading: true, error: null });
     try {
-      const response = await axiosClient.post(`/visita/${id}/realizada`, { notas });
+      const response = await axiosClient.patch(`/visita/${id}/realizada`, notas);
       
       // Actualizar lista local
       set((state) => ({
@@ -359,11 +428,16 @@ export const useVisitasStore = create((set, get) => ({
 
   // Cargar agentes
   cargarAgentes: async () => {
+    console.log('🔄 Iniciando cargarAgentes...');
     try {
+      console.log('📡 Haciendo llamada a /usuarios/agentes');
       const response = await axiosClient.get('/usuarios/agentes');
+      console.log('✅ Respuesta recibida:', response.data);
       set({ agentes: response.data });
+      console.log('✅ Agentes guardados en estado');
     } catch (error) {
-      console.error('Error cargando agentes:', error);
+      console.error('❌ Error cargando agentes:', error);
+      set({ agentes: [] });
     }
   },
 

@@ -5,7 +5,7 @@ const baseURL =
     import.meta.env &&
     import.meta.env.VITE_API_URL) ||
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://localhost:5174/api";
+  "http://localhost:5174/api";
 
 export const axiosClient = axios.create({
   baseURL,
@@ -17,6 +17,7 @@ export const axiosClient = axios.create({
 // Interceptor para agregar JWT token
 axiosClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
+  console.log('📤 Axios request interceptor:', config.url, token ? '✅ Token found' : '❌ No token');
   if (token && token !== "null" && token !== "undefined" && token.length > 0) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -25,8 +26,12 @@ axiosClient.interceptors.request.use((config) => {
 
 // Interceptor para manejar refresh token
 axiosClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('✅ Axios response interceptor - Success:', response.config.url, response.status);
+    return response;
+  },
   async (error) => {
+    console.log('❌ Axios response interceptor - Error:', error.config?.url, error.response?.status, error.message);
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
