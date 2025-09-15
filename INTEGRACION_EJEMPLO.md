@@ -365,3 +365,4 @@ dotnet publish -c Release
 ```
 
 Asegúrate de configurar las URLs correctas en producción y verificar que los permisos CORS estén configurados apropiadamente.
+

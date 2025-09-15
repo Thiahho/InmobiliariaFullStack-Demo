@@ -326,6 +326,47 @@ namespace LandingBack.Controllers
             }
         }
 
+        // POST: api/lead/solicitar-visita
+        [HttpPost("solicitar-visita")]
+        public async Task<ActionResult<object>> SolicitarVisita([FromBody] LeadCreateDto leadCreateDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                // Configurar específicamente para solicitud de visita
+                leadCreateDto.Canal = "Web";
+                leadCreateDto.TipoConsulta = "Visita";
+                leadCreateDto.Origen = "ficha-propiedad";
+                leadCreateDto.IpAddress = GetClientIpAddress();
+                leadCreateDto.UserAgent = Request.Headers.UserAgent.ToString();
+
+                var lead = await _leadService.CreateLeadAsync(leadCreateDto);
+                
+                // TODO: Aquí se podría enviar una notificación automática al agente
+                // o crear directamente una visita en estado "Pendiente"
+                
+                // Respuesta para solicitud de visita
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "Solicitud de visita enviada correctamente. Un agente se contactará contigo dentro de las próximas 2 horas.",
+                    LeadId = lead.Id,
+                    TipoConsulta = "Visita"
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Success = false, Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al procesar solicitud de visita");
+                return StatusCode(500, new { Success = false, Message = "Error interno del servidor" });
+            }
+        }
+
         // GET: api/lead/export
         [HttpGet("export")]
         [Authorize(Roles = "Admin")]

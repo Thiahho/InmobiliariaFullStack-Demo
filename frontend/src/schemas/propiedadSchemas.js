@@ -271,3 +271,4 @@ export const getTipoIcon = (tipo) => {
   return icons[tipo] || '🏠';
 };
 
+

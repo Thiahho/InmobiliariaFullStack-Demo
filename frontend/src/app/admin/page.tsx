@@ -173,9 +173,12 @@ export default function AdminPage() {
               </div>
               <div className="bg-gray-50 px-5 py-3">
                 <div className="text-sm">
-                  <button className="font-medium text-yellow-600 hover:text-yellow-500">
+                  <Link 
+                    href="/admin/visitas"
+                    className="font-medium text-yellow-600 hover:text-yellow-500"
+                  >
                     Ver todas las visitas →
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

@@ -48,6 +48,11 @@ const Navbar = () => {
               Testimonios
             </a>
           </li>
+          <li>
+            <a href="" className="cursor-pointer hover:text-gray-400">
+              Generar Visita
+            </a>
+          </li>
         </ul>
         {isAuthenticated ? (
           <div className="hidden md:flex items-center gap-3">

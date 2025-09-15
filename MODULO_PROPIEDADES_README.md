@@ -323,3 +323,4 @@ Para soporte técnico:
 **Última actualización**: Septiembre 2024  
 **Versión**: 1.0.0  
 **Compatibilidad**: ASP.NET Core 8, React 18+
+

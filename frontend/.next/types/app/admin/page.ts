@@ -1,4 +1,4 @@
-// File: D:\CursorExe\InmobiliariaFullStack\frontend\src\app\admin\page.tsx
+// File: C:\Users\thiag\source\repos\Thiahho\InmobiliariaFullStack\frontend\src\app\admin\page.tsx
 import * as entry from '../../../../src/app/admin/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Text;
+// using Hangfire; // Commented out for now
+// using Hangfire.PostgreSql;
+// using LandingBack.Filters; // Commented out while Hangfire is disabled
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,8 +86,21 @@ builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddScoped<ILeadService, LeadService>();
 builder.Services.AddScoped<IVisitaService, VisitaService>();
 builder.Services.AddScoped<IVisitaAuditoriaService, VisitaAuditoriaService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IVisitaJobService, VisitaJobService>();
 builder.Services.AddScoped<IAdvancedSearchService, AdvancedSearchService>();
 builder.Services.AddScoped<IImageProcessingService, ImageProcessingService>();
+
+// Configure Hangfire (commented out for now - can be enabled later)
+/*
+builder.Services.AddHangfire(configuration => configuration
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"))));
+
+builder.Services.AddHangfireServer();
+*/
 
 // Add Health Checks (temporarily disabled DB check)
 builder.Services.AddHealthChecks();
@@ -117,7 +133,22 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Configure Hangfire Dashboard (commented out for now)
+/*
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireDashboardAuthorizationFilter() }
+});
+*/
+
 app.MapControllers();
 app.MapHealthChecks("/health");
+
+// Configure recurring jobs (commented out for now)
+/*
+RecurringJob.AddOrUpdate<IVisitaJobService>("process-reminders", 
+    service => service.ProcessRemindersAsync(), 
+    Cron.Hourly); // Ejecutar cada hora para verificar recordatorios
+*/
 
 app.Run();

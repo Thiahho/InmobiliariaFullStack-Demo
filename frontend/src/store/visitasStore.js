@@ -1,0 +1,401 @@
+import { create } from 'zustand';
+import { axiosClient } from '../lib/axiosClient';
+
+export const useVisitasStore = create((set, get) => ({
+  // Estado
+  visitas: [],
+  visitaActual: null,
+  agentes: [],
+  loading: false,
+  error: null,
+  filtros: {
+    agenteId: null,
+    estado: '',
+    fechaDesde: null,
+    fechaHasta: null,
+    page: 1,
+    pageSize: 20
+  },
+  totalCount: 0,
+  totalPages: 0,
+
+  // Acciones básicas
+  setLoading: (loading) => set({ loading }),
+  setError: (error) => set({ error }),
+  clearError: () => set({ error: null }),
+
+  // Gestión de filtros
+  setFiltros: (filtros) => set((state) => ({
+    filtros: { ...state.filtros, ...filtros, page: 1 }
+  })),
+  
+  resetFiltros: () => set({
+    filtros: {
+      agenteId: null,
+      estado: '',
+      fechaDesde: null,
+      fechaHasta: null,
+      page: 1,
+      pageSize: 20
+    }
+  }),
+
+  // Cargar visitas
+  cargarVisitas: async () => {
+    set({ loading: true, error: null });
+    try {
+      const { filtros } = get();
+      const params = new URLSearchParams();
+      
+      Object.entries(filtros).forEach(([key, value]) => {
+        if (value !== null && value !== '' && value !== undefined) {
+          if (value instanceof Date) {
+            params.append(key, value.toISOString());
+          } else {
+            params.append(key, value.toString());
+          }
+        }
+      });
+
+      const response = await axiosClient.get(`/visita?${params}`);
+      
+      set({
+        visitas: response.data.visitas,
+        totalCount: response.data.totalCount,
+        totalPages: response.data.totalPages,
+        loading: false
+      });
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || 'Error al cargar visitas',
+        loading: false
+      });
+    }
+  },
+
+  // Cargar visitas para calendario
+  cargarVisitasCalendario: async (agenteId = null, fechaDesde = null, fechaHasta = null) => {
+    set({ loading: true, error: null });
+    try {
+      const params = new URLSearchParams();
+      if (agenteId) params.append('agenteId', agenteId);
+      if (fechaDesde) params.append('fechaDesde', fechaDesde.toISOString());
+      if (fechaHasta) params.append('fechaHasta', fechaHasta.toISOString());
+
+      const response = await axiosClient.get(`/visita/calendar?${params}`);
+      return response.data;
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || 'Error al cargar calendario',
+        loading: false
+      });
+      return [];
+    }
+  },
+
+  // Obtener visita por ID
+  obtenerVisita: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosClient.get(`/visita/${id}`);
+      set({ visitaActual: response.data, loading: false });
+      return response.data;
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || 'Error al obtener visita',
+        loading: false
+      });
+      throw error;
+    }
+  },
+
+  // Crear visita
+  crearVisita: async (visitaData) => {
+    console.log('🔧 Store: Iniciando crearVisita con datos:', visitaData);
+    set({ loading: true, error: null });
+    try {
+      // Transformar datos a PascalCase para el backend
+      const dataForBackend = {
+        PropiedadId: visitaData.propiedadId,
+        AgenteId: visitaData.agenteId,
+        ClienteNombre: visitaData.clienteNombre,
+        ClienteTelefono: visitaData.clienteTelefono || null,
+        ClienteEmail: visitaData.clienteEmail || null,
+        FechaHora: visitaData.fechaHora instanceof Date 
+          ? visitaData.fechaHora.toISOString() 
+          : visitaData.fechaHora,
+        DuracionMinutos: visitaData.duracionMinutos,
+        Observaciones: visitaData.observaciones || null
+      };
+
+      console.log('🌐 Store: Enviando datos al backend:', dataForBackend);
+      const response = await axiosClient.post('/visita', dataForBackend);
+      console.log('📨 Store: Respuesta del backend:', response.data);
+      
+      // Actualizar lista local
+      set((state) => ({
+        visitas: [response.data, ...state.visitas],
+        loading: false
+      }));
+
+      console.log('✅ Store: Visita creada exitosamente');
+      return response.data;
+    } catch (error) {
+      console.error('❌ Store: Error en crearVisita:', error);
+      console.error('❌ Store: Error completo:', {
+        message: error?.message,
+        response: error?.response,
+        status: error?.response?.status,
+        data: error?.response?.data
+      });
+      
+      // Log específico para errores de validación
+      if (error?.response?.status === 400 && error?.response?.data?.errors) {
+        console.error('❌ Errores de validación específicos:', error.response.data.errors);
+      }
+      
+      set({ 
+        error: error.response?.data?.message || 'Error al crear visita',
+        loading: false
+      });
+      throw error;
+    }
+  },
+
+  // Actualizar visita
+  actualizarVisita: async (id, visitaData) => {
+    set({ loading: true, error: null });
+    try {
+      // Transformar datos a PascalCase para el backend
+      const dataForBackend = {
+        Id: id,
+        PropiedadId: visitaData.propiedadId,
+        AgenteId: visitaData.agenteId,
+        ClienteNombre: visitaData.clienteNombre,
+        ClienteTelefono: visitaData.clienteTelefono,
+        ClienteEmail: visitaData.clienteEmail,
+        FechaHora: visitaData.fechaHora,
+        DuracionMinutos: visitaData.duracionMinutos,
+        Observaciones: visitaData.observaciones,
+        Estado: visitaData.estado,
+        NotasVisita: visitaData.notasVisita
+      };
+
+      const response = await axiosClient.put(`/visita/${id}`, dataForBackend);
+      
+      // Actualizar lista local
+      set((state) => ({
+        visitas: state.visitas.map(v => v.id === id ? response.data : v),
+        visitaActual: state.visitaActual?.id === id ? response.data : state.visitaActual,
+        loading: false
+      }));
+
+      return response.data;
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || 'Error al actualizar visita',
+        loading: false
+      });
+      throw error;
+    }
+  },
+
+  // Eliminar visita
+  eliminarVisita: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      await axiosClient.delete(`/visita/${id}`);
+      
+      // Actualizar lista local
+      set((state) => ({
+        visitas: state.visitas.filter(v => v.id !== id),
+        loading: false
+      }));
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || 'Error al eliminar visita',
+        loading: false
+      });
+      throw error;
+    }
+  },
+
+  // Acciones de estado
+  confirmarVisita: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosClient.post(`/visita/${id}/confirmar`);
+      
+      // Actualizar lista local
+      set((state) => ({
+        visitas: state.visitas.map(v => v.id === id ? response.data : v),
+        loading: false
+      }));
+
+      return response.data;
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || 'Error al confirmar visita',
+        loading: false
+      });
+      throw error;
+    }
+  },
+
+  cancelarVisita: async (id, motivo) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosClient.post(`/visita/${id}/cancelar`, { motivo });
+      
+      // Actualizar lista local
+      set((state) => ({
+        visitas: state.visitas.map(v => v.id === id ? response.data : v),
+        loading: false
+      }));
+
+      return response.data;
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || 'Error al cancelar visita',
+        loading: false
+      });
+      throw error;
+    }
+  },
+
+  reagendarVisita: async (id, nuevaFecha) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosClient.post(`/visita/${id}/reagendar`, { nuevaFecha });
+      
+      // Actualizar lista local
+      set((state) => ({
+        visitas: state.visitas.map(v => v.id === id ? response.data : v),
+        loading: false
+      }));
+
+      return response.data;
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || 'Error al reagendar visita',
+        loading: false
+      });
+      throw error;
+    }
+  },
+
+  marcarRealizada: async (id, notas = '') => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosClient.post(`/visita/${id}/realizada`, { notas });
+      
+      // Actualizar lista local
+      set((state) => ({
+        visitas: state.visitas.map(v => v.id === id ? response.data : v),
+        loading: false
+      }));
+
+      return response.data;
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || 'Error al marcar como realizada',
+        loading: false
+      });
+      throw error;
+    }
+  },
+
+  // Acciones masivas
+  accionMasiva: async (visitaIds, accion, options = {}) => {
+    set({ loading: true, error: null });
+    try {
+      const payload = {
+        visitaIds,
+        accion,
+        ...options
+      };
+
+      await axiosClient.post('/visita/bulk-action', payload);
+      
+      // Recargar visitas
+      get().cargarVisitas();
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.message || 'Error en acción masiva',
+        loading: false
+      });
+      throw error;
+    }
+  },
+
+  // Validar conflictos
+  validarConflicto: async (agenteId, fechaHora, duracionMinutos, visitaIdExcluir = null) => {
+    try {
+      const response = await axiosClient.post('/visita/check-conflict', {
+        AgenteId: agenteId,
+        FechaHora: fechaHora,
+        DuracionMinutos: duracionMinutos,
+        VisitaIdExcluir: visitaIdExcluir
+      });
+      return response.data.hasConflict;
+    } catch (error) {
+      console.error('Error validando conflicto:', error);
+      return false;
+    }
+  },
+
+  // Obtener slots disponibles
+  obtenerSlotsDisponibles: async (agenteId, fecha, duracionMinutos = 60) => {
+    try {
+      const response = await axiosClient.get(`/visita/available-slots`, {
+        params: { agenteId, fecha: fecha.toISOString(), duracionMinutos }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error obteniendo slots:', error);
+      return [];
+    }
+  },
+
+  // Cargar agentes
+  cargarAgentes: async () => {
+    try {
+      const response = await axiosClient.get('/usuarios/agentes');
+      set({ agentes: response.data });
+    } catch (error) {
+      console.error('Error cargando agentes:', error);
+    }
+  },
+
+  // Descargar ICS
+  descargarICS: async (visitaId) => {
+    try {
+      const response = await axiosClient.get(`/visita/${visitaId}/ics`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `visita-${visitaId}.ics`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      set({ error: 'Error al descargar archivo ICS' });
+    }
+  },
+
+  // Enviar notificación
+  enviarNotificacion: async (visitaId, tipo = 'Email') => {
+    try {
+      await axiosClient.post(`/visita/${visitaId}/notification`, null, {
+        params: { tipo }
+      });
+    } catch (error) {
+      set({ error: 'Error al enviar notificación' });
+      throw error;
+    }
+  }
+}));

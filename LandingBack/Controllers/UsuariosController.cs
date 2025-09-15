@@ -57,6 +57,22 @@ namespace LandingBack.Controllers
             if (!ok) return NotFound();
             return Ok(new { success = true });
         }
+
+        [HttpGet("agentes")]
+        [Authorize(Roles = "Admin,Agente")]
+        public async Task<IActionResult> GetAgentes()
+        {
+            try
+            {
+                var agentes = await _usuariosService.GetUsuariosAsync();
+                return Ok(agentes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener agentes");
+                return StatusCode(500, "Error interno del servidor");
+            }
+        }
     }
 }
 

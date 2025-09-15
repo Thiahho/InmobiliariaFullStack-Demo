@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import UsersAdmin from '../../../components/users/UsersAdmin';
 import { useAuthStore, Roles } from '../../../store/authStore';
 import { axiosClient } from '../../../lib/axiosClient';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 export default function AgentesPage() {
     const router = useRouter();
@@ -45,7 +46,17 @@ export default function AgentesPage() {
     return (
         <div className="min-h-screen bg-gray-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <h1 className="text-3xl font-bold mb-4">Gestión de Agentes</h1>
+                <div className="flex items-center justify-between mb-6">
+                    <h1 className="text-3xl font-bold">Gestión de Agentes</h1>
+                    <button
+                        onClick={() => router.push('/admin')}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors"
+                    >
+                        <ArrowLeftIcon className="w-4 h-4" />
+                        Volver al Panel
+                    </button>
+                </div>
+
                 <UsersAdmin />
             </div>
         </div>

@@ -12,12 +12,17 @@ namespace LandingBack.Services
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
         private readonly IVisitaAuditoriaService _auditoriaService;
+        private readonly IEmailService _emailService;
+        private readonly IVisitaJobService _jobService;
 
-        public VisitaService(AppDbContext context, IMapper mapper, IVisitaAuditoriaService auditoriaService)
+        public VisitaService(AppDbContext context, IMapper mapper, IVisitaAuditoriaService auditoriaService, 
+            IEmailService emailService, IVisitaJobService jobService)
         {
             _context = context;
             _mapper = mapper;
             _auditoriaService = auditoriaService;
+            _emailService = emailService;
+            _jobService = jobService;
         }
 
         public async Task<VisitaResponseDto> GetVisitaByIdAsync(int id)
@@ -377,6 +382,20 @@ namespace LandingBack.Services
                 "Visita confirmada"
             );
 
+            // Enviar emails de confirmación con ICS
+            try
+            {
+                await _emailService.SendVisitaConfirmationEmailAsync(visitaId);
+                
+                // Programar recordatorio 24h antes
+                await _jobService.ScheduleVisitaReminderAsync(visitaId);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the confirmation
+                // TODO: Add logger injection
+            }
+
             return await GetVisitaByIdAsync(visitaId);
         }
 
@@ -406,6 +425,18 @@ namespace LandingBack.Services
                 new { Estado = "Cancelada", Motivo = motivo },
                 $"Visita cancelada: {motivo}"
             );
+
+            // Enviar emails de cancelación y cancelar recordatorio
+            try
+            {
+                await _emailService.SendVisitaCancellationEmailAsync(visitaId, motivo);
+                await _jobService.CancelScheduledReminderAsync(visitaId);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the cancellation
+                // TODO: Add logger injection
+            }
 
             return await GetVisitaByIdAsync(visitaId);
         }
@@ -442,6 +473,24 @@ namespace LandingBack.Services
                 new { FechaHora = nuevaFecha },
                 $"Visita reagendada desde {fechaAnterior:dd/MM/yyyy HH:mm} a {nuevaFecha:dd/MM/yyyy HH:mm}"
             );
+
+            // Enviar emails de reprogramación y reprogramar recordatorio
+            try
+            {
+                await _emailService.SendVisitaRescheduleEmailAsync(visitaId, fechaAnterior);
+                
+                // Cancelar recordatorio anterior y programar nuevo
+                await _jobService.CancelScheduledReminderAsync(visitaId);
+                if (visita.Estado == "Confirmada")
+                {
+                    await _jobService.ScheduleVisitaReminderAsync(visitaId);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the reschedule
+                // TODO: Add logger injection
+            }
 
             return await GetVisitaByIdAsync(visitaId);
         }
@@ -581,31 +630,17 @@ namespace LandingBack.Services
 
         public async Task SendVisitaNotificationAsync(int visitaId, string tipoNotificacion = "Email")
         {
-            var visita = await GetVisitaByIdAsync(visitaId);
-            
-            // Aquí se implementaría la lógica de envío de notificaciones
-            // Por ahora solo registramos que se debe enviar
-            await Task.CompletedTask;
+            if (tipoNotificacion.ToLower() == "email")
+            {
+                await _emailService.SendVisitaConfirmationEmailAsync(visitaId);
+            }
+            // Futuras implementaciones para SMS, Push, etc.
         }
 
         public async Task<string> GenerateICSFileAsync(int visitaId)
         {
-            var visita = await GetVisitaByIdAsync(visitaId);
-            
-            var icsContent = $@"BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Inmobiliaria//Visitas//ES
-BEGIN:VEVENT
-UID:{Guid.NewGuid()}@inmobiliaria.com
-DTSTART:{visita.FechaHora:yyyyMMddTHHmmssZ}
-DTEND:{visita.FechaHora.AddMinutes(visita.DuracionMinutos):yyyyMMddTHHmmssZ}
-SUMMARY:Visita - {visita.PropiedadCodigo}
-DESCRIPTION:Cliente: {visita.ClienteNombre}\nPropiedad: {visita.PropiedadDireccion}\nAgente: {visita.AgenteNombre}
-LOCATION:{visita.PropiedadDireccion}
-END:VEVENT
-END:VCALENDAR";
-
-            return icsContent;
+            var icsBytes = await _emailService.GenerateICSAttachmentAsync(visitaId);
+            return System.Text.Encoding.UTF8.GetString(icsBytes);
         }
 
         public async Task<bool> IsValidTimeSlotAsync(int agenteId, DateTime fechaHora, int duracionMinutos)
