@@ -109,17 +109,17 @@ const UsersAdmin = () => {
       </div>
     </section>
   );
-  return (
-    <div className="min-h-screen bg-gray-100">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center justify-between mb-4">
-                <h1 className="text-3xl font-bold">Mi perfil</h1>
-                <a href="/admin" className="inline-flex items-center gap-2 rounded bg-blue-600 text-white px-4 py-2 hover:bg-blue-700">Volver al Panel</a>
-            </div>
-            <UserProfile />
-        </div>
-    </div>
-);
+//   return (
+//     <div className="min-h-screen bg-gray-100">
+//         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+//             <div className="flex items-center justify-between mb-4">
+//                 <h1 className="text-3xl font-bold">Mi perfil</h1>
+//                 <a href="/admin" className="inline-flex items-center gap-2 rounded bg-blue-600 text-white px-4 py-2 hover:bg-blue-700">Volver al Panel</a>
+//             </div>
+//             <UserProfile />
+//         </div>
+//     </div>
+// );
 };
 
 export default UsersAdmin;

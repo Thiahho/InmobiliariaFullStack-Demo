@@ -51,61 +51,45 @@ export default function VisitasAdmin() {
   const [visitasSeleccionadas, setVisitasSeleccionadas] = useState<number[]>(
     []
   );
+  const [agendaRefreshTrigger, setAgendaRefreshTrigger] = useState(0);
   // Eliminamos estados de modales de cancelar/reagendar
 
-  // CORRECCIÓN: Usar el store de manera memoizada para evitar loops
-  const visitas = useVisitasStore((state) => state.visitas);
-  const agentes = useVisitasStore((state) => state.agentes);
-  const loading = useVisitasStore((state) => state.loading);
-  const error = useVisitasStore((state) => state.error);
-
-  const confirmarVisita = useVisitasStore((state) => state.confirmarVisita);
-  const cancelarVisita = useVisitasStore((state) => state.cancelarVisita);
-  const marcarRealizada = useVisitasStore((state) => state.marcarRealizada);
-  const accionMasiva = useVisitasStore((state) => state.accionMasiva);
-  const enviarNotificacion = useVisitasStore(
-    (state) => state.enviarNotificacion
-  );
-  const descargarICS = useVisitasStore((state) => state.descargarICS);
-  const setFiltros = useVisitasStore((state) => state.setFiltros);
-  const clearError = useVisitasStore((state) => state.clearError);
+  // Seleccionar solo el estado necesario para evitar re-renders innecesarios
+  const { visitas, agentes, loading, error } = useVisitasStore((state) => ({
+    visitas: state.visitas,
+    agentes: state.agentes,
+    loading: state.loading,
+    error: state.error
+  }));
 
   // Auth state
   const { isAuthenticated, isInitialized } = useAuthStore();
 
-  // CORRECCIÓN: Funciones memoizadas para evitar recreación
-  const cargarDatos = useCallback(() => {
-    console.log('🚀 cargarDatos ejecutándose, isAuthenticated:', isAuthenticated);
-    if (!isAuthenticated) {
-      console.log('❌ Usuario no autenticado, no se cargan datos');
-      return;
-    }
-    console.log('✅ Cargando agentes...');
-    const state = useVisitasStore.getState();
-    state.cargarAgentes();
-  }, [isAuthenticated]);
+  // console.log('🔄 VisitasAdmin RENDER:', { vistaActiva, agenteSeleccionado, isAuthenticated });
 
   // Cargar datos cuando el usuario esté autenticado
   const initializedRef = useRef(false);
   useEffect(() => {
-    console.log('🔍 VisitasAdmin useEffect:', { isInitialized, isAuthenticated, hasInitialized: initializedRef.current });
+    // console.log('🔍 VisitasAdmin useEffect:', { isInitialized, isAuthenticated, hasInitialized: initializedRef.current });
     if (!isInitialized || !isAuthenticated || initializedRef.current) return;
-    console.log('✅ Ejecutando cargarDatos en VisitasAdmin');
+    // console.log('✅ Ejecutando cargarDatos en VisitasAdmin');
     initializedRef.current = true;
-    cargarDatos();
-  }, [cargarDatos, isInitialized, isAuthenticated]);
 
-  // TEMPORALMENTE DESHABILITADO - Cargar visitas solo cuando cambie la vista a lista o cambien filtros en vista lista
-  // useEffect(() => {
-  //   if (vistaActiva === "lista") {
-  //     const state = useVisitasStore.getState();
-  //     state.setFiltros({
-  //       agenteId: agenteSeleccionado,
-  //       estado: estadoFiltro || undefined,
-  //     });
-  //     state.cargarVisitas();
-  //   }
-  // }, [vistaActiva, agenteSeleccionado, estadoFiltro]);
+    const { cargarAgentes } = useVisitasStore.getState();
+    cargarAgentes();
+  }, [isInitialized, isAuthenticated]);
+
+  // Cargar visitas cuando cambie la vista a lista o cambien filtros en vista lista
+  useEffect(() => {
+    if (vistaActiva === "lista" && isAuthenticated) {
+      const { setFiltros, cargarVisitas } = useVisitasStore.getState();
+      setFiltros({
+        agenteId: agenteSeleccionado,
+        estado: estadoFiltro || undefined,
+      });
+      cargarVisitas();
+    }
+  }, [vistaActiva, agenteSeleccionado, estadoFiltro, isAuthenticated]);
 
   // Manejar apertura de formulario para nueva visita
   const handleNuevaVisita = (fecha?: Date, agenteId?: number) => {
@@ -123,18 +107,26 @@ export default function VisitasAdmin() {
     setMostrarFormulario(true);
   };
 
+  // Función para triggear refresh de la agenda
+  const triggerAgendaRefresh = () => {
+    setAgendaRefreshTrigger(Date.now());
+  };
+
   // Manejar éxito del formulario
   const handleFormularioExito = () => {
     // No necesitamos recargar las visitas porque el store ya actualiza la lista localmente
     console.log("🎉 Formulario completado exitosamente");
     setMostrarFormulario(false);
+    triggerAgendaRefresh(); // Refrescar agenda
   };
 
   // Acciones de estado de visita
   const handleConfirmarVisita = async (visitaId: number) => {
     try {
+      const { confirmarVisita } = useVisitasStore.getState();
       await confirmarVisita(visitaId);
       toast.success("Visita confirmada correctamente");
+      triggerAgendaRefresh();
     } catch (error) {
       toast.error("Error al confirmar la visita");
     }
@@ -152,10 +144,12 @@ export default function VisitasAdmin() {
   const confirmarCancelacion = async (_motivo: string) => {
     if (!visitaEditando) return;
     try {
+      const { cancelarVisita } = useVisitasStore.getState();
       await cancelarVisita(visitaEditando, _motivo);
       toast.success("Visita cancelada correctamente");
       setMostrarFormulario(false);
       setVisitaEditando(null);
+      triggerAgendaRefresh();
     } catch (error) {
       toast.error("Error al cancelar la visita");
       throw error;
@@ -173,11 +167,12 @@ export default function VisitasAdmin() {
   const confirmarReagendamiento = async (nuevaFecha: Date) => {
     if (!visitaEditando) return;
     try {
-      const state = useVisitasStore.getState();
-      await state.reagendarVisita(visitaEditando, nuevaFecha);
+      const { reagendarVisita } = useVisitasStore.getState();
+      await reagendarVisita(visitaEditando, nuevaFecha);
       toast.success("Visita reagendada correctamente");
       setMostrarFormulario(false);
       setVisitaEditando(null);
+      triggerAgendaRefresh();
     } catch (error) {
       toast.error("Error al reagendar la visita");
       throw error;
@@ -188,8 +183,10 @@ export default function VisitasAdmin() {
     const notas = ""; // Sin prompt; se podría incorporar en el formulario si se requiere
 
     try {
+      const { marcarRealizada } = useVisitasStore.getState();
       await marcarRealizada(visitaId, notas);
       toast.success("Visita marcada como realizada");
+      triggerAgendaRefresh();
     } catch (error) {
       toast.error("Error al marcar la visita como realizada");
     }
@@ -212,9 +209,11 @@ export default function VisitasAdmin() {
 
     // Para otras acciones masivas (ej. Confirmar) mantenemos flujo automático
     try {
+      const { accionMasiva } = useVisitasStore.getState();
       await accionMasiva(visitasSeleccionadas, accion, {});
       setVisitasSeleccionadas([]);
       toast.success(`Acción "${accion}" aplicada correctamente`);
+      triggerAgendaRefresh();
     } catch (error) {
       toast.error(`Error al ejecutar la acción "${accion}"`);
     }
@@ -233,9 +232,10 @@ export default function VisitasAdmin() {
   useEffect(() => {
     if (error) {
       toast.error(error);
+      const { clearError } = useVisitasStore.getState();
       clearError();
     }
-  }, [error, clearError]);
+  }, [error]);
 
   return (
     <div className="p-6">
@@ -337,6 +337,8 @@ export default function VisitasAdmin() {
               onNuevaVisita={handleNuevaVisita}
               onEditarVisita={handleEditarVisita}
               agenteSeleccionado={agenteSeleccionado}
+              estadoFiltro={estadoFiltro}
+              refreshTrigger={agendaRefreshTrigger}
             />
           ) : (
             <div className="p-6">

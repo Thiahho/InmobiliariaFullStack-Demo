@@ -54,6 +54,7 @@ const PropiedadForm = ({ propiedadId = null, onSuccess = null }) => {
   });
 
   const operacion = watch('operacion');
+  const tipoPropiedad = watch('tipo');
 
   // Lista de amenities disponibles
   const amenitiesDisponibles = [
@@ -98,12 +99,17 @@ const PropiedadForm = ({ propiedadId = null, onSuccess = null }) => {
 
   const onSubmit = async (data) => {
     try {
+      // Tipos de propiedades que no requieren ciertos campos
+      const tiposQueNoRequierenAmbientes = ['Terreno', 'Cochera', 'Galpon'];
+
       const propiedadData = {
         ...data,
         amenities: amenitiesSeleccionados,
         precio: parseFloat(data.precio) || 0,
         expensas: data.expensas ? parseFloat(data.expensas) : null,
-        ambientes: parseInt(data.ambientes) || 0,
+        ambientes: tiposQueNoRequierenAmbientes.includes(data.tipo)
+          ? null
+          : (data.ambientes ? parseInt(data.ambientes) : null),
         dormitorios: data.dormitorios ? parseInt(data.dormitorios) : null,
         banos: data.banos ? parseInt(data.banos) : null,
         metrosCubiertos: data.metrosCubiertos ? parseInt(data.metrosCubiertos) : null,
@@ -361,11 +367,17 @@ const PropiedadForm = ({ propiedadId = null, onSuccess = null }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Ambientes *</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Ambientes {!['Terreno', 'Cochera', 'Galpon'].includes(tipoPropiedad) && '*'}
+                </label>
                 <input
                   type="number"
-                  {...register('ambientes', { required: 'Los ambientes son requeridos', min: 1 })}
+                  {...register('ambientes', {
+                    required: !['Terreno', 'Cochera', 'Galpon'].includes(tipoPropiedad) ? 'Los ambientes son requeridos' : false,
+                    min: 0
+                  })}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  disabled={['Terreno', 'Cochera', 'Galpon'].includes(tipoPropiedad)}
                 />
                 {errors.ambientes && <p className="mt-1 text-sm text-red-600">{errors.ambientes.message}</p>}
               </div>

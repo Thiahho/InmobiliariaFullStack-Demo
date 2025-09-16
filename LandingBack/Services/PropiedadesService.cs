@@ -45,8 +45,9 @@ namespace LandingBack.Services
                     throw new ArgumentException("La direccion es requerida");
                 if (propiedadCreateDto.Precio <= 0)
                     throw new ArgumentException("El precio debe ser mayor a 0");
-                if (propiedadCreateDto.Ambientes <= 0)
-                    throw new ArgumentException("Los ambientes deben ser mayor a 0");
+                // Ambientes es opcional para ciertos tipos de propiedades
+                if (propiedadCreateDto.Ambientes.HasValue && propiedadCreateDto.Ambientes <= 0)
+                    throw new ArgumentException("Los ambientes deben ser mayor a 0 si se especifican");
 
                 var entidad = _mapper.Map<Propiedad>(propiedadCreateDto);
                 entidad.FechaPublicacionUtc = DateTime.UtcNow;
@@ -66,7 +67,18 @@ namespace LandingBack.Services
             }
             catch(Exception ex)
             {
-                throw new InvalidOperationException($"Error al crear la propiedad: {ex.Message}", ex);
+                _logger.LogError(ex, "Error al crear propiedad. Datos recibidos: {@PropiedadData}", propiedadCreateDto);
+
+                var innerException = ex.InnerException;
+                var fullMessage = ex.Message;
+
+                while (innerException != null)
+                {
+                    fullMessage += $" -> Inner: {innerException.Message}";
+                    innerException = innerException.InnerException;
+                }
+
+                throw new InvalidOperationException($"Error al crear la propiedad: {fullMessage}", ex);
             }
         }
 

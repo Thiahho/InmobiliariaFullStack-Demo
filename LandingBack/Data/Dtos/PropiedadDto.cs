@@ -5,7 +5,6 @@ namespace LandingBack.Data.Dtos
 {
     public class PropiedadCreateDto
     {
-        [Required]
         public int Id {get;set;}
         
         [Required]
@@ -45,9 +44,8 @@ namespace LandingBack.Data.Dtos
         [Range(0, double.MaxValue)]
         public decimal? Expensas { get; set; }
         
-        [Required]
-        [Range(1, 20)]
-        public int Ambientes { get; set; }
+        [Range(0, 20)]
+        public int? Ambientes { get; set; }
         
         [Range(0, 20)]
         public int? Dormitorios { get; set; }
@@ -72,11 +70,14 @@ namespace LandingBack.Data.Dtos
         public bool? AptoCredito { get; set; }
         
         public Dictionary<string, object>? Amenities { get; set; }
-        
+
         [MaxLength(20)]
         public string Estado { get; set; } = "Activo";
-        
+
         public bool Destacado { get; set; } = false;
+
+        public string? Titulo { get; set; }
+        public string? Descripcion { get; set; }
     }
 
     public class PropiedadUpdateDto : PropiedadCreateDto
@@ -98,7 +99,7 @@ namespace LandingBack.Data.Dtos
         public string Moneda { get; set; } = null!;
         public decimal Precio { get; set; }
         public decimal? Expensas { get; set; }
-        public int Ambientes { get; set; }
+        public int? Ambientes { get; set; }
         public int? Dormitorios { get; set; }
         public int? Banos { get; set; }
         public bool? Cochera { get; set; }
