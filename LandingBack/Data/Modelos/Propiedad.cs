@@ -19,7 +19,7 @@ namespace LandingBack.Data.Modelos
         public string Moneda { get; set; } = "USD";      // USD|ARS
         public decimal Precio { get; set; }
         public decimal? Expensas { get; set; }
-        public int Ambientes { get; set; }
+        public int? Ambientes { get; set; }
         public int? Dormitorios { get; set; }
         public int? Banos { get; set; }
         public bool? Cochera { get; set; }

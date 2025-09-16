@@ -85,6 +85,34 @@ namespace LandingBack.Controllers
             }
         }
 
+        // POST: api/propiedades/test
+        [HttpPost("test")]
+        [Authorize(Roles = "Admin,Agente,Cargador")]
+        public async Task<ActionResult<object>> TestCreatePropiedad(PropiedadCreateDto propiedadCreateDto)
+        {
+            try
+            {
+                _logger.LogInformation("🧪 TEST: Recibiendo datos: {@Data}", propiedadCreateDto);
+
+                if (!ModelState.IsValid)
+                {
+                    _logger.LogWarning("🧪 TEST: ModelState inválido: {@ModelState}", ModelState);
+                    return BadRequest(ModelState);
+                }
+
+                _logger.LogInformation("🧪 TEST: ModelState válido, intentando crear propiedad...");
+                var nuevaPropiedad = await _propiedadesService.CreatePropiedadAsync(propiedadCreateDto);
+                _logger.LogInformation("🧪 TEST: Propiedad creada exitosamente: {@Propiedad}", nuevaPropiedad);
+
+                return Ok(new { message = "Test exitoso", propiedad = nuevaPropiedad });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "🧪 TEST: Error completo: {Message}", ex.Message);
+                return StatusCode(500, new { message = "Error en test", details = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
         // POST: api/propiedades
         [HttpPost]
         [Authorize(Roles = "Admin,Agente,Cargador")]
@@ -106,8 +134,8 @@ namespace LandingBack.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al crear propiedad");
-                return StatusCode(500, "Error interno del servidor");
+                _logger.LogError(ex, "Error al crear propiedad. ModelState: {@ModelState}, Data: {@PropiedadData}", ModelState, propiedadCreateDto);
+                return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
             }
         }
 
