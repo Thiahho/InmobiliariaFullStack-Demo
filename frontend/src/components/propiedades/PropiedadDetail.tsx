@@ -16,6 +16,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
 import { BotonAgendarVisita } from "../visitas";
+import MapView from "./MapView";
 
 // ==== Tipos ====
 type ID = string | number;
@@ -82,9 +83,10 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
 
   const [currentMediaIndex, setCurrentMediaIndex] = useState<number>(0);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<"descripcion" | "caracteristicas" | "ubicacion">(
+  const [activeTab, setActiveTab] = useState<"descripcion" | "caracteristicas">(
     "descripcion"
   );
+  const [mapPreloaded, setMapPreloaded] = useState<boolean>(false);
 
   useEffect(() => {
     if (propiedadId != null) {
@@ -93,6 +95,25 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
       setCurrentMediaIndex(0);
     }
   }, [propiedadId, fetchPropiedadById, fetchMediasByPropiedad]);
+
+  // Precargar mapa después de que se cargan los datos de la propiedad
+  useEffect(() => {
+    if (
+      propiedadActual &&
+      propiedadActual.latitud &&
+      propiedadActual.longitud &&
+      !mapPreloaded
+    ) {
+      // Precargar recursos de leaflet en background
+      if (typeof window !== "undefined") {
+        import("leaflet").then(() => {
+          import("react-leaflet").then(() => {
+            setMapPreloaded(true);
+          });
+        });
+      }
+    }
+  }, [propiedadActual, mapPreloaded]);
 
   if (loading || !propiedadActual) {
     return (
@@ -132,15 +153,21 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
   };
 
   const isImage = (m: Media) =>
-    m.tipo === "image" || Boolean(m.tipoArchivo?.match(/^(jpg|jpeg|png|gif|webp|bmp)$/i));
+    m.tipo === "image" ||
+    Boolean(m.tipoArchivo?.match(/^(jpg|jpeg|png|gif|webp|bmp)$/i));
   const isVideo = (m: Media) =>
-    m.tipo === "video" || Boolean(m.tipoArchivo?.match(/^(mp4|avi|mov|wmv|m4v|webm)$/i));
+    m.tipo === "video" ||
+    Boolean(m.tipoArchivo?.match(/^(mp4|avi|mov|wmv|m4v|webm)$/i));
   const isExternalVideo = (m: Media) =>
-    m.url.includes("youtube.com") || m.url.includes("vimeo.com") || m.url.includes("youtu.be");
+    m.url.includes("youtube.com") ||
+    m.url.includes("vimeo.com") ||
+    m.url.includes("youtu.be");
   const isTour = (m: Media) => m.tipo === "tour";
 
   const totalMedias = mediasPropiedad?.length ?? 0;
-  const sortedMedias = [...(mediasPropiedad ?? [])].sort((a, b) => a.orden - b.orden);
+  const sortedMedias = [...(mediasPropiedad ?? [])].sort(
+    (a, b) => a.orden - b.orden
+  );
   const currentMedia = sortedMedias[currentMediaIndex];
 
   const nextMedia = () => {
@@ -152,7 +179,8 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
 
   const handleShare = async () => {
     const title =
-      propiedadActual.titulo || `${propiedadActual.tipo ?? ""} en ${propiedadActual.barrio ?? ""}`;
+      propiedadActual.titulo ||
+      `${propiedadActual.tipo ?? ""} en ${propiedadActual.barrio ?? ""}`;
     const text = `${propiedadActual.tipo ?? "Propiedad"} de ${
       propiedadActual.ambientes ?? "-"
     } ambientes en ${propiedadActual.barrio ?? "-"}`;
@@ -183,7 +211,9 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 {propiedadActual.titulo ||
-                  `${propiedadActual.tipo ?? ""} en ${propiedadActual.barrio ?? ""}`}
+                  `${propiedadActual.tipo ?? ""} en ${
+                    propiedadActual.barrio ?? ""
+                  }`}
               </h1>
               <div className="flex items-center mt-2 text-gray-600">
                 <MapPinIcon className="h-5 w-5 mr-1" />
@@ -209,7 +239,11 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
                 title="Agregar a favoritos"
                 type="button"
               >
-                {isFavorite ? <HeartSolidIcon className="h-6 w-6 text-red-500" /> : <HeartIcon className="h-6 w-6" />}
+                {isFavorite ? (
+                  <HeartSolidIcon className="h-6 w-6 text-red-500" />
+                ) : (
+                  <HeartIcon className="h-6 w-6" />
+                )}
               </button>
 
               <button
@@ -233,15 +267,23 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
                         src={getMediaUrl(currentMedia)}
                         alt={currentMedia.titulo || "Imagen"}
                         className="w-full h-full object-cover"
-                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                        onError={(
+                          e: React.SyntheticEvent<HTMLImageElement>
+                        ) => {
                           e.currentTarget.src = "/placeholder-property.jpg";
                         }}
                       />
                     )}
 
-                    {currentMedia && isVideo(currentMedia) && !isExternalVideo(currentMedia) && (
-                      <video src={getMediaUrl(currentMedia)} controls className="w-full h-full object-cover" />
-                    )}
+                    {currentMedia &&
+                      isVideo(currentMedia) &&
+                      !isExternalVideo(currentMedia) && (
+                        <video
+                          src={getMediaUrl(currentMedia)}
+                          controls
+                          className="w-full h-full object-cover"
+                        />
+                      )}
 
                     {currentMedia && isExternalVideo(currentMedia) && (
                       <div className="w-full h-full">
@@ -294,10 +336,17 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
 
                   {currentMedia && (
                     <div className="absolute top-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm flex items-center">
-                      {isImage(currentMedia) && <PhotoIcon className="h-4 w-4 mr-1" />}
-                      {isVideo(currentMedia) && <PlayIcon className="h-4 w-4 mr-1" />}
-                      {isTour(currentMedia) && <GlobeAltIcon className="h-4 w-4 mr-1" />}
-                      {String(currentMedia.tipo).charAt(0).toUpperCase() + String(currentMedia.tipo).slice(1)}
+                      {isImage(currentMedia) && (
+                        <PhotoIcon className="h-4 w-4 mr-1" />
+                      )}
+                      {isVideo(currentMedia) && (
+                        <PlayIcon className="h-4 w-4 mr-1" />
+                      )}
+                      {isTour(currentMedia) && (
+                        <GlobeAltIcon className="h-4 w-4 mr-1" />
+                      )}
+                      {String(currentMedia.tipo).charAt(0).toUpperCase() +
+                        String(currentMedia.tipo).slice(1)}
                     </div>
                   )}
                 </div>
@@ -309,7 +358,6 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
                   </div>
                 </div>
               )}
-
               {sortedMedias.length > 1 && (
                 <div className="p-4 border-t border-gray-2 00">
                   <div className="flex space-x-2 overflow-x-auto">
@@ -318,16 +366,26 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
                         key={String(media.id)}
                         onClick={() => setCurrentMediaIndex(index)}
                         className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                          index === currentMediaIndex ? "border-blue-500" : "border-gray-200 hover:border-gray-300"
+                          index === currentMediaIndex
+                            ? "border-blue-500"
+                            : "border-gray-200 hover:border-gray-300"
                         }`}
                         type="button"
                       >
                         {isImage(media) ? (
-                          <img src={getMediaUrl(media)} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                          <img
+                            src={getMediaUrl(media)}
+                            alt={`Thumbnail ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                            {isVideo(media) && <PlayIcon className="h-6 w-6 text-gray-500" />}
-                            {isTour(media) && <GlobeAltIcon className="h-6 w-6 text-gray-500" />}
+                            {isVideo(media) && (
+                              <PlayIcon className="h-6 w-6 text-gray-500" />
+                            )}
+                            {isTour(media) && (
+                              <GlobeAltIcon className="h-6 w-6 text-gray-500" />
+                            )}
                           </div>
                         )}
                       </button>
@@ -335,6 +393,61 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
                   </div>
                 </div>
               )}
+              {/* Mapa de ubicación debajo de la imagen */}
+              {propiedadActual.latitud != null &&
+                propiedadActual.longitud != null && (
+                  <div className="border-t border-gray-200 p-4">
+                    <div className="mb-3">
+                      <h3 className="font-medium text-gray-900 mb-1">
+                        Ubicación
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {propiedadActual.direccion}
+                        {propiedadActual.barrio
+                          ? `, ${propiedadActual.barrio}`
+                          : ""}
+                        {propiedadActual.comuna
+                          ? `, ${propiedadActual.comuna}`
+                          : ""}
+                      </p>
+                    </div>
+                    <div className="rounded-lg overflow-hidden border border-gray-200 mb-3">
+                      <MapView
+                        lat={propiedadActual.latitud}
+                        lng={propiedadActual.longitud}
+                        address={`${propiedadActual.direccion}${
+                          propiedadActual.barrio
+                            ? `, ${propiedadActual.barrio}`
+                            : ""
+                        }${
+                          propiedadActual.comuna
+                            ? `, ${propiedadActual.comuna}`
+                            : ""
+                        }`}
+                        height="200px"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <a
+                        href={`https://www.google.com/maps?q=${propiedadActual.latitud},${propiedadActual.longitud}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                      >
+                        <MapPinIcon className="h-3 w-3 mr-1" />
+                        Ver en Google Maps
+                      </a>
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${propiedadActual.latitud},${propiedadActual.longitud}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded hover:bg-green-100 transition-colors"
+                      >
+                        🚗 Cómo llegar
+                      </a>
+                    </div>
+                  </div>
+                )}
             </div>
 
             {/* Info */}
@@ -342,7 +455,10 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-3xl font-bold text-green-600">
-                    {formatPrice(propiedadActual.precio, propiedadActual.moneda || "USD")}
+                    {formatPrice(
+                      propiedadActual.precio,
+                      propiedadActual.moneda || "USD"
+                    )}
                   </div>
                   <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium capitalize">
                     {propiedadActual.operacion}
@@ -351,7 +467,12 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
 
                 {typeof propiedadActual.expensas === "number" && (
                   <p className="text-gray-600 mb-2">
-                    + {formatPrice(propiedadActual.expensas, propiedadActual.moneda || "USD")} expensas
+                    +{" "}
+                    {formatPrice(
+                      propiedadActual.expensas,
+                      propiedadActual.moneda || "USD"
+                    )}{" "}
+                    expensas
                   </p>
                 )}
 
@@ -361,10 +482,18 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
                     {propiedadActual.ambientes} ambientes
                   </div>
 
-                  {propiedadActual.dormitorios ? <div>🛏️ {propiedadActual.dormitorios} dormitorios</div> : null}
-                  {propiedadActual.banos ? <div>🚿 {propiedadActual.banos} baños</div> : null}
-                  {propiedadActual.metrosCubiertos ? <div>📐 {propiedadActual.metrosCubiertos} m² cubiertos</div> : null}
-                  {propiedadActual.metrosTotales ? <div>📏 {propiedadActual.metrosTotales} m² totales</div> : null}
+                  {propiedadActual.dormitorios ? (
+                    <div>🛏️ {propiedadActual.dormitorios} dormitorios</div>
+                  ) : null}
+                  {propiedadActual.banos ? (
+                    <div>🚿 {propiedadActual.banos} baños</div>
+                  ) : null}
+                  {propiedadActual.metrosCubiertos ? (
+                    <div>📐 {propiedadActual.metrosCubiertos} m² cubiertos</div>
+                  ) : null}
+                  {propiedadActual.metrosTotales ? (
+                    <div>📏 {propiedadActual.metrosTotales} m² totales</div>
+                  ) : null}
                   {propiedadActual.cochera ? <div>🚗 Cochera</div> : null}
                 </div>
 
@@ -383,11 +512,14 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
                   {[
                     { id: "descripcion", label: "Descripción" },
                     { id: "caracteristicas", label: "Características" },
-                    { id: "ubicacion", label: "Ubicación" },
                   ].map((tab) => (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id as Props["propiedadId"] extends never ? never : any)}
+                      onClick={() =>
+                        setActiveTab(
+                          tab.id as "descripcion" | "caracteristicas"
+                        )
+                      }
                       className={`py-2 px-1 border-b-2 font-medium text-sm ${
                         activeTab === (tab.id as string)
                           ? "border-blue-500 text-blue-600"
@@ -401,7 +533,7 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
                 </nav>
               </div>
 
-              <div className="space-y-4">
+              <div>
                 {activeTab === "descripcion" && (
                   <div>
                     {propiedadActual.descripcion ? (
@@ -409,7 +541,9 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
                         {propiedadActual.descripcion}
                       </p>
                     ) : (
-                      <p className="text-gray-500 italic">Sin descripción disponible</p>
+                      <p className="text-gray-500 italic">
+                        Sin descripción disponible
+                      </p>
                     )}
                   </div>
                 )}
@@ -423,65 +557,58 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
                       </div>
 
                       <div>
-                        <span className="font-medium text-gray-700">Estado:</span>
-                        <p className="text-gray-600">{propiedadActual.estado}</p>
+                        <span className="font-medium text-gray-700">
+                          Estado:
+                        </span>
+                        <p className="text-gray-600">
+                          {propiedadActual.estado}
+                        </p>
                       </div>
 
                       {typeof propiedadActual.antiguedad === "number" && (
                         <div>
-                          <span className="font-medium text-gray-700">Antigüedad:</span>
-                          <p className="text-gray-600">{propiedadActual.antiguedad} años</p>
+                          <span className="font-medium text-gray-700">
+                            Antigüedad:
+                          </span>
+                          <p className="text-gray-600">
+                            {propiedadActual.antiguedad} años
+                          </p>
                         </div>
                       )}
 
                       {typeof propiedadActual.piso === "number" && (
                         <div>
-                          <span className="font-medium text-gray-700">Piso:</span>
-                          <p className="text-gray-600">{propiedadActual.piso}°</p>
+                          <span className="font-medium text-gray-700">
+                            Piso:
+                          </span>
+                          <p className="text-gray-600">
+                            {propiedadActual.piso}°
+                          </p>
                         </div>
                       )}
                     </div>
 
-                    {propiedadActual.amenities && Object.keys(propiedadActual.amenities).length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-gray-700 mb-2">Amenities:</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {Object.entries(propiedadActual.amenities).map(
-                            ([amenity, value]) =>
-                              value && (
-                                <span
-                                  key={amenity}
-                                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                                >
-                                  {amenity}
-                                </span>
-                              )
-                          )}
+                    {propiedadActual.amenities &&
+                      Object.keys(propiedadActual.amenities).length > 0 && (
+                        <div>
+                          <h4 className="font-medium text-gray-700 mb-2">
+                            Amenities:
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(propiedadActual.amenities).map(
+                              ([amenity, value]) =>
+                                value && (
+                                  <span
+                                    key={amenity}
+                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                                  >
+                                    {amenity}
+                                  </span>
+                                )
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === "ubicacion" && (
-                  <div className="space-y-3">
-                    <div>
-                      <span className="font-medium text-gray-700">Dirección completa:</span>
-                      <p className="text-gray-600">
-                        {propiedadActual.direccion}
-                        {propiedadActual.barrio ? `, ${propiedadActual.barrio}` : ""}
-                        {propiedadActual.comuna ? `, ${propiedadActual.comuna}` : ""}
-                      </p>
-                    </div>
-
-                    {propiedadActual.latitud != null && propiedadActual.longitud != null && (
-                      <div>
-                        <span className="font-medium text-gray-700">Coordenadas:</span>
-                        <p className="text-gray-600 text-sm">
-                          {propiedadActual.latitud}, {propiedadActual.longitud}
-                        </p>
-                      </div>
-                    )}
+                      )}
                   </div>
                 )}
               </div>
@@ -492,7 +619,9 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
                   Publicado el {formatDate(propiedadActual.fechaPublicacionUtc)}
                 </div>
 
-                <div className="mt-2 text-sm text-gray-500">Código: {propiedadActual.codigo}</div>
+                <div className="mt-2 text-sm text-gray-500">
+                  Código: {propiedadActual.codigo}
+                </div>
               </div>
 
               <div className="mt-6 space-y-3">
@@ -505,17 +634,17 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
 
                 <BotonAgendarVisita
                   propiedad={{
-                    id: propiedadActual.id,
+                    id: Number(propiedadActual.id),
                     codigo: propiedadActual.codigo,
-                    tipo: propiedadActual.tipo,
-                    direccion: propiedadActual.direccion,
-                    barrio: propiedadActual.barrio,
+                    tipo: propiedadActual.tipo || "",
+                    direccion: propiedadActual.direccion || "",
+                    barrio: propiedadActual.barrio || "",
                     precio: propiedadActual.precio,
-                    moneda: propiedadActual.moneda,
-                    ambientes: propiedadActual.ambientes,
+                    moneda: propiedadActual.moneda || "USD",
+                    ambientes: propiedadActual.ambientes || 0,
                     dormitorios: propiedadActual.dormitorios,
                     banos: propiedadActual.banos,
-                    metrosCubiertos: propiedadActual.metrosCubiertos
+                    metrosCubiertos: propiedadActual.metrosCubiertos,
                   }}
                   variant="outline"
                   fullWidth

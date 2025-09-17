@@ -82,6 +82,7 @@ export default function AgendarVisitaModal({
 }: AgendarVisitaModalProps) {
   const [paso, setPaso] = useState<"formulario" | "confirmacion">("formulario");
   const [enviando, setEnviando] = useState(false);
+  const [respuestaServidor, setRespuestaServidor] = useState<any>(null);
 
   const {
     register,
@@ -144,12 +145,20 @@ export default function AgendarVisitaModal({
         origen: "ficha-propiedad",
       };
 
-      await axiosClient.post("/leads/solicitar-visita", leadData);
+      const response = await axiosClient.post("/lead/solicitar-visita", leadData);
+
+      // Guardar respuesta del servidor
+      setRespuestaServidor(response.data);
 
       // Mostrar confirmación
       setPaso("confirmacion");
 
-      toast.success("¡Solicitud enviada correctamente!");
+      // Mostrar mensaje según el estado de asignación
+      if (response.data.EstadoAsignacion === "Asignado") {
+        toast.success("¡Solicitud enviada y agente asignado! Se contactará contigo pronto.");
+      } else {
+        toast.success("¡Solicitud enviada correctamente! Un administrador asignará un agente especializado.");
+      }
     } catch (error) {
       console.error("Error enviando solicitud:", error);
       toast.error(
@@ -162,6 +171,7 @@ export default function AgendarVisitaModal({
 
   const handleClose = () => {
     setPaso("formulario");
+    setRespuestaServidor(null);
     reset();
     onClose();
   };
@@ -169,7 +179,7 @@ export default function AgendarVisitaModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {paso === "formulario" ? (
           <>
@@ -435,7 +445,9 @@ export default function AgendarVisitaModal({
             </div>
 
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              ¡Solicitud enviada correctamente!
+              {respuestaServidor?.EstadoAsignacion === "Asignado"
+                ? "¡Solicitud enviada y agente asignado!"
+                : "¡Solicitud de visita enviada correctamente!"}
             </h3>
 
             <div className="text-sm text-gray-600 space-y-2 mb-6">
@@ -443,12 +455,30 @@ export default function AgendarVisitaModal({
                 Hemos recibido tu solicitud de visita para la propiedad{" "}
                 <strong>{propiedad.codigo}</strong>.
               </p>
-              <p>
-                Un agente se contactará contigo{" "}
-                <strong>dentro de las próximas 2 horas</strong> al teléfono{" "}
-                <strong>{watchedValues.telefono}</strong> para confirmar la
-                disponibilidad y coordinar el horario definitivo.
-              </p>
+              {respuestaServidor?.EstadoAsignacion === "Asignado" ? (
+                <div className="space-y-2">
+                  <p className="text-green-700 font-medium">
+                    ✅ Se ha asignado un agente especializado:{" "}
+                    <strong>{respuestaServidor.AgenteAsignado}</strong>.
+                  </p>
+                  <p>
+                    El agente se contactará contigo{" "}
+                    <strong>muy pronto</strong> al teléfono{" "}
+                    <strong>{watchedValues.telefono}</strong> para coordinar la visita.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-blue-700 font-medium">
+                    📋 Tu solicitud está siendo procesada por nuestros administradores.
+                  </p>
+                  <p>
+                    Un agente especializado será asignado y se contactará contigo{" "}
+                    <strong>dentro de las próximas 2 horas</strong> al teléfono{" "}
+                    <strong>{watchedValues.telefono}</strong> para coordinar la visita.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="bg-blue-50 p-4 rounded-md border border-blue-200 mb-6">
@@ -482,6 +512,16 @@ export default function AgendarVisitaModal({
                   🏠 <strong>Propiedad:</strong> {propiedad.codigo} -{" "}
                   {propiedad.direccion}, {propiedad.barrio}
                 </p>
+                {respuestaServidor?.VisitaId && (
+                  <>
+                    <p className="text-green-800 font-medium">
+                      🎯 <strong>ID de Visita:</strong> #{respuestaServidor.VisitaId}
+                    </p>
+                    <p className="text-green-800 font-medium">
+                      👨‍💼 <strong>Agente asignado:</strong> {respuestaServidor.AgenteAsignado || "Por asignar"}
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 

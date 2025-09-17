@@ -2,20 +2,20 @@
 
 import React from 'react';
 import { useAuthStore } from '../../../store/authStore';
-import { VisitasAdmin } from '../../../components/visitas';
+import { LeadsAdmin } from '../../../components/leads';
 import Link from 'next/link';
 import { ChevronLeftIcon } from '@heroicons/react/24/outline';
 
-export default function VisitasPage() {
+export default function LeadsPage() {
   const { user, role, hasPermission } = useAuthStore();
 
   // Verificar permisos
-  if (!hasPermission('manage_visits') && !hasPermission('view_dashboard')) {
+  if (!hasPermission('manage_leads') && !hasPermission('view_dashboard')) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Acceso denegado</h1>
-          <p className="text-gray-600 mb-6">No tienes permisos para acceder a la gestión de visitas</p>
+          <p className="text-gray-600 mb-6">No tienes permisos para acceder a la gestión de leads</p>
           <Link
             href="/admin"
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
@@ -42,7 +42,7 @@ export default function VisitasPage() {
                 <ChevronLeftIcon className="h-4 w-4 mr-1" />
                 Panel de Administración
               </Link>
-              <div className="text-sm text-gray-300">/ Gestión de Visitas</div>
+              <div className="text-sm text-gray-300">/ Gestión de Leads</div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
@@ -56,7 +56,7 @@ export default function VisitasPage() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <VisitasAdmin />
+        <LeadsAdmin />
       </div>
     </div>
   );

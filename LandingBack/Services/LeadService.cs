@@ -12,12 +12,16 @@ namespace LandingBack.Services
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<LeadService> _logger;
+        private readonly IVisitaService _visitaService;
+        private readonly IEmailService _emailService;
 
-        public LeadService(AppDbContext context, IMapper mapper, ILogger<LeadService> logger)
+        public LeadService(AppDbContext context, IMapper mapper, ILogger<LeadService> logger, IVisitaService visitaService, IEmailService emailService)
         {
             _context = context;
             _mapper = mapper;
             _logger = logger;
+            _visitaService = visitaService;
+            _emailService = emailService;
         }
 
         public async Task<LeadResponseDto> GetLeadByIdAsync(int id)
@@ -139,8 +143,9 @@ namespace LandingBack.Services
                 _context.Leads.Add(lead);
                 await _context.SaveChangesAsync();
 
-                // Auto-asignar si hay agentes disponibles
-                await AutoAssignLeadAsync(lead.Id);
+                // DESACTIVADO: Auto-asignar si hay agentes disponibles
+                // Los leads ahora deben asignarse manualmente desde el panel de administración
+                // await AutoAssignLeadAsync(lead.Id);
 
                 // Recargar con navegación
                 await _context.Entry(lead)
@@ -149,6 +154,17 @@ namespace LandingBack.Services
                 await _context.Entry(lead)
                     .Reference(l => l.AgenteAsignado)
                     .LoadAsync();
+
+                // Enviar notificación de confirmación al cliente
+                try
+                {
+                    await _emailService.SendLeadConfirmationEmailAsync(lead.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error enviando email de confirmación al cliente para lead {LeadId}", lead.Id);
+                    // No fallar la creación del lead si falla el email
+                }
 
                 return MapToResponseDto(lead);
             }
@@ -236,6 +252,52 @@ namespace LandingBack.Services
 
                 await _context.SaveChangesAsync();
 
+                // Si es un lead de tipo "Visita", crear automáticamente la visita
+                if (lead.TipoConsulta == "Visita")
+                {
+                    try
+                    {
+                        // Parsear fecha preferida del mensaje si está presente
+                        var fechaVisita = ParseFechaPreferidaFromMessage(lead.Mensaje) ?? DateTime.SpecifyKind(DateTime.UtcNow.AddDays(1).Date.AddHours(10), DateTimeKind.Utc);
+
+                        // Asegurar que esté en horario comercial
+                        fechaVisita = AdjustToBusinessHours(fechaVisita);
+
+                        var visitaDto = new VisitaCreateDto
+                        {
+                            PropiedadId = lead.PropiedadId,
+                            AgenteId = assignDto.AgenteId,
+                            ClienteNombre = lead.Nombre,
+                            ClienteTelefono = lead.Telefono,
+                            ClienteEmail = lead.Email,
+                            FechaHora = fechaVisita,
+                            DuracionMinutos = 60,
+                            Observaciones = $"Visita generada automáticamente al asignar agente. Lead #{lead.Id}. {lead.Mensaje}"
+                        };
+
+                        var visita = await _visitaService.CreateVisitaAsync(visitaDto, usuarioId);
+
+                        // Actualizar notas del lead con la información de la visita
+                        var notaVisita = $"Visita #{visita.Id} creada automáticamente para {fechaVisita:dd/MM/yyyy HH:mm}";
+                        lead.NotasInternas = string.IsNullOrEmpty(lead.NotasInternas)
+                            ? notaVisita
+                            : lead.NotasInternas + "\n\n" + notaVisita;
+
+                        await _context.SaveChangesAsync();
+
+                        // Enviar notificación al agente
+                        await _visitaService.SendVisitaNotificationAsync(visita.Id);
+
+                        _logger.LogInformation("Visita {VisitaId} creada automáticamente al asignar agente {AgenteId} al lead {LeadId}",
+                            visita.Id, assignDto.AgenteId, lead.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error al crear visita automática al asignar agente para lead {LeadId}", lead.Id);
+                        // No fallar la asignación si no se puede crear la visita
+                    }
+                }
+
                 // Recargar con navegación
                 await _context.Entry(lead)
                     .Reference(l => l.Propiedad)
@@ -243,6 +305,17 @@ namespace LandingBack.Services
                 await _context.Entry(lead)
                     .Reference(l => l.AgenteAsignado)
                     .LoadAsync();
+
+                // Enviar notificación de asignación al agente
+                try
+                {
+                    await _emailService.SendLeadAssignmentEmailAsync(lead.Id, assignDto.AgenteId, usuarioId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error enviando email de asignación al agente para lead {LeadId}", lead.Id);
+                    // No fallar la asignación si falla el email
+                }
 
                 return MapToResponseDto(lead);
             }
@@ -540,6 +613,130 @@ namespace LandingBack.Services
                 IpAddress = lead.IpAddress,
                 UserAgent = lead.UserAgent
             };
+        }
+
+        public async Task<(LeadResponseDto Lead, int? VisitaId)> CreateLeadWithVisitaAsync(LeadCreateDto leadCreateDto)
+        {
+            try
+            {
+                // Crear el lead primero
+                var lead = await CreateLeadAsync(leadCreateDto);
+
+                int? visitaId = null;
+
+                // Si es una solicitud de visita, crear la visita automáticamente
+                if (leadCreateDto.TipoConsulta == "Visita" && lead.AgenteAsignadoId.HasValue)
+                {
+                    try
+                    {
+                        // Parsear fecha preferida del mensaje si está presente
+                        var fechaVisita = ParseFechaPreferidaFromMessage(leadCreateDto.Mensaje) ?? DateTime.SpecifyKind(DateTime.UtcNow.AddDays(1).Date.AddHours(10), DateTimeKind.Utc);
+
+                        // Asegurar que esté en horario comercial
+                        fechaVisita = AdjustToBusinessHours(fechaVisita);
+
+                        var visitaDto = new VisitaCreateDto
+                        {
+                            PropiedadId = leadCreateDto.PropiedadId,
+                            AgenteId = lead.AgenteAsignadoId.Value,
+                            ClienteNombre = leadCreateDto.Nombre,
+                            ClienteTelefono = leadCreateDto.Telefono,
+                            ClienteEmail = leadCreateDto.Email,
+                            FechaHora = fechaVisita,
+                            DuracionMinutos = 60,
+                            Observaciones = $"Visita generada automáticamente desde lead. {leadCreateDto.Mensaje}"
+                        };
+
+                        var visita = await _visitaService.CreateVisitaAsync(visitaDto, 0); // 0 = sistema
+                        visitaId = visita.Id;
+
+                        // Actualizar el lead con la referencia a la visita
+                        var leadEntity = await _context.Leads.FirstOrDefaultAsync(l => l.Id == lead.Id);
+                        if (leadEntity != null)
+                        {
+                            leadEntity.NotasInternas = $"Visita #{visitaId} creada automáticamente para {fechaVisita:dd/MM/yyyy HH:mm}";
+                            await _context.SaveChangesAsync();
+                        }
+
+                        // Enviar notificación al agente
+                        await _visitaService.SendVisitaNotificationAsync(visita.Id);
+
+                        _logger.LogInformation("Visita {VisitaId} creada automáticamente para lead {LeadId}", visitaId, lead.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error al crear visita automática para lead {LeadId}", lead.Id);
+                        // No fallar el lead si la visita no se puede crear
+                    }
+                }
+
+                return (lead, visitaId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear lead con visita");
+                throw new InvalidOperationException($"Error al crear lead con visita: {ex.Message}", ex);
+            }
+        }
+
+        private DateTime? ParseFechaPreferidaFromMessage(string? mensaje)
+        {
+            if (string.IsNullOrEmpty(mensaje))
+                return null;
+
+            try
+            {
+                // Buscar patrón "para el DD/MM/YYYY a las HH:mm"
+                var regex = new System.Text.RegularExpressions.Regex(@"para el (\d{2}/\d{2}/\d{4}) a las (\d{2}:\d{2}) (AM|PM)");
+                var match = regex.Match(mensaje);
+
+                if (match.Success)
+                {
+                    var fechaStr = match.Groups[1].Value;
+                    var horaStr = match.Groups[2].Value;
+                    var periodoStr = match.Groups[3].Value;
+
+                    if (DateTime.TryParseExact(fechaStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var fecha))
+                    {
+                        if (TimeSpan.TryParse(horaStr, out var hora))
+                        {
+                            // Ajustar AM/PM
+                            if (periodoStr == "PM" && hora.Hours < 12)
+                                hora = hora.Add(TimeSpan.FromHours(12));
+                            else if (periodoStr == "AM" && hora.Hours == 12)
+                                hora = hora.Subtract(TimeSpan.FromHours(12));
+
+                            var result = fecha.Add(hora);
+                            return DateTime.SpecifyKind(result, DateTimeKind.Utc);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error al parsear fecha preferida del mensaje: {Mensaje}", mensaje);
+            }
+
+            return null;
+        }
+
+        private DateTime AdjustToBusinessHours(DateTime fechaHora)
+        {
+            // Horario comercial: 8:00 - 18:00, Lunes a Sábado
+            var fecha = fechaHora.Date;
+            var hora = fechaHora.TimeOfDay;
+
+            // Si es domingo, mover al lunes
+            if (fecha.DayOfWeek == DayOfWeek.Sunday)
+                fecha = fecha.AddDays(1);
+
+            // Si está fuera del horario comercial, ajustar a 10:00 AM
+            if (hora < TimeSpan.FromHours(8) || hora > TimeSpan.FromHours(18))
+                hora = TimeSpan.FromHours(10);
+
+            // Asegurar que el DateTime esté en UTC
+            var result = fecha.Add(hora);
+            return result.Kind == DateTimeKind.Utc ? result : DateTime.SpecifyKind(result, DateTimeKind.Utc);
         }
 
         #endregion

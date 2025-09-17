@@ -239,6 +239,290 @@ namespace LandingBack.Services
             return ics.ToString();
         }
 
+        public async Task SendEmailWithCustomSenderAsync(string fromEmail, string fromName, string toEmail, string subject, string htmlContent, byte[]? attachment = null, string? attachmentName = null)
+        {
+            try
+            {
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(fromName, fromEmail));
+                message.To.Add(new MailboxAddress("", toEmail));
+                message.Subject = subject;
+
+                var bodyBuilder = new BodyBuilder
+                {
+                    HtmlBody = htmlContent
+                };
+
+                // Agregar archivo ICS si se proporciona
+                if (attachment != null && !string.IsNullOrEmpty(attachmentName))
+                {
+                    bodyBuilder.Attachments.Add(attachmentName, attachment, ContentType.Parse("text/calendar"));
+                }
+
+                message.Body = bodyBuilder.ToMessageBody();
+
+                using var client = new SmtpClient();
+                await client.ConnectAsync(_configuration["Email:SmtpHost"], int.Parse(_configuration["Email:SmtpPort"]!), SecureSocketOptions.StartTls);
+
+                // Usar las credenciales del emisor dinámico o las del sistema si no están configuradas
+                var username = string.IsNullOrEmpty(_configuration["Email:Username"]) ? fromEmail : _configuration["Email:Username"];
+                var password = _configuration["Email:Password"];
+
+                await client.AuthenticateAsync(username, password);
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+
+                _logger.LogInformation($"Email enviado exitosamente desde {fromEmail} a {toEmail}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error enviando email desde {fromEmail} a {toEmail}");
+                throw;
+            }
+        }
+
+        public async Task SendLeadAssignmentEmailAsync(int leadId, int agenteId)
+        {
+            var leadDetails = await GetLeadWithDetailsAsync(leadId);
+            if (leadDetails == null) throw new KeyNotFoundException($"Lead {leadId} no encontrado");
+
+            // Email al agente
+            var agenteHtmlContent = GenerateLeadAssignmentHtml(leadDetails, isForClient: false);
+            await SendEmailAsync(
+                leadDetails.Agente.Email,
+                $"Nuevo lead asignado: {leadDetails.Propiedad.Codigo} - {leadDetails.ClienteNombre}",
+                agenteHtmlContent
+            );
+
+            _logger.LogInformation("Email de asignación de lead {LeadId} enviado al agente {AgenteId}", leadId, agenteId);
+        }
+
+        public async Task SendLeadAssignmentEmailAsync(int leadId, int agenteId, int asignadoPorUsuarioId)
+        {
+            var leadDetails = await GetLeadWithDetailsAsync(leadId);
+            if (leadDetails == null) throw new KeyNotFoundException($"Lead {leadId} no encontrado");
+
+            // Obtener información del usuario que está asignando
+            var usuarioAsignador = await _context.Agentes.FirstOrDefaultAsync(a => a.Id == asignadoPorUsuarioId);
+
+            if (usuarioAsignador != null && !string.IsNullOrEmpty(usuarioAsignador.Email))
+            {
+                // Usar el email del usuario que asigna como emisor
+                var agenteHtmlContent = GenerateLeadAssignmentHtml(leadDetails, isForClient: false);
+                await SendEmailWithCustomSenderAsync(
+                    usuarioAsignador.Email,
+                    $"{usuarioAsignador.Nombre} - Inmobiliaria",
+                    leadDetails.Agente.Email,
+                    $"Nuevo lead asignado: {leadDetails.Propiedad.Codigo} - {leadDetails.ClienteNombre}",
+                    agenteHtmlContent
+                );
+
+                _logger.LogInformation("Email de asignación de lead {LeadId} enviado desde {UsuarioEmail} al agente {AgenteId}",
+                    leadId, usuarioAsignador.Email, agenteId);
+            }
+            else
+            {
+                // Fallback al método original si no se puede obtener el usuario asignador
+                await SendLeadAssignmentEmailAsync(leadId, agenteId);
+            }
+        }
+
+        public async Task SendLeadConfirmationEmailAsync(int leadId)
+        {
+            var leadDetails = await GetLeadWithDetailsAsync(leadId);
+            if (leadDetails == null) throw new KeyNotFoundException($"Lead {leadId} no encontrado");
+
+            // Email al cliente confirmando recepción de la consulta
+            if (!string.IsNullOrEmpty(leadDetails.Email))
+            {
+                var clienteHtmlContent = GenerateLeadConfirmationHtml(leadDetails, isForClient: true);
+                await SendEmailAsync(
+                    leadDetails.Email,
+                    $"Consulta recibida: {leadDetails.Propiedad.Codigo} - {leadDetails.Propiedad.Barrio}",
+                    clienteHtmlContent
+                );
+            }
+
+            _logger.LogInformation("Email de confirmación de lead {LeadId} enviado al cliente", leadId);
+        }
+
+        public async Task SendLeadConfirmationEmailAsync(int leadId, string fromEmail, string fromName)
+        {
+            var leadDetails = await GetLeadWithDetailsAsync(leadId);
+            if (leadDetails == null) throw new KeyNotFoundException($"Lead {leadId} no encontrado");
+
+            // Email al cliente confirmando recepción de la consulta usando emisor personalizado
+            if (!string.IsNullOrEmpty(leadDetails.Email))
+            {
+                var clienteHtmlContent = GenerateLeadConfirmationHtml(leadDetails, isForClient: true);
+                await SendEmailWithCustomSenderAsync(
+                    fromEmail,
+                    fromName,
+                    leadDetails.Email,
+                    $"Consulta recibida: {leadDetails.Propiedad.Codigo} - {leadDetails.Propiedad.Barrio}",
+                    clienteHtmlContent
+                );
+            }
+
+            _logger.LogInformation("Email de confirmación de lead {LeadId} enviado desde {FromEmail} al cliente", leadId, fromEmail);
+        }
+
+        private async Task<dynamic?> GetLeadWithDetailsAsync(int leadId)
+        {
+            return await _context.Leads
+                .Include(l => l.Propiedad)
+                .Include(l => l.AgenteAsignado)
+                .Where(l => l.Id == leadId)
+                .Select(l => new
+                {
+                    l.Id,
+                    l.Nombre,
+                    l.Email,
+                    l.Telefono,
+                    l.Mensaje,
+                    l.TipoConsulta,
+                    l.Estado,
+                    l.FechaCreacion,
+                    ClienteNombre = l.Nombre,
+                    Propiedad = new
+                    {
+                        l.Propiedad.Codigo,
+                        l.Propiedad.Barrio,
+                        l.Propiedad.Direccion,
+                        l.Propiedad.Tipo,
+                        l.Propiedad.Precio,
+                        l.Propiedad.Moneda,
+                        l.Propiedad.Descripcion
+                    },
+                    Agente = l.AgenteAsignado != null ? new
+                    {
+                        l.AgenteAsignado.Nombre,
+                        l.AgenteAsignado.Email,
+                        l.AgenteAsignado.Telefono
+                    } : null
+                })
+                .FirstOrDefaultAsync();
+        }
+
+        private string GenerateLeadAssignmentHtml(dynamic lead, bool isForClient)
+        {
+            return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""utf-8"">
+    <title>Nuevo Lead Asignado</title>
+</head>
+<body style=""font-family: Arial, sans-serif; line-height: 1.6; color: #333;"">
+    <div style=""max-width: 600px; margin: 0 auto; padding: 20px;"">
+        <h2 style=""color: #2c5aa0;"">🆕 Nuevo Lead Asignado</h2>
+
+        <p>Hola {lead.Agente.Nombre},</p>
+
+        <p>Se te ha asignado un nuevo lead para gestionar. Por favor, contactate con el cliente lo antes posible.</p>
+
+        <div style=""background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;"">
+            <h3>Información del Cliente</h3>
+            <p><strong>Nombre:</strong> {lead.ClienteNombre}</p>
+            <p><strong>Email:</strong> {lead.Email}</p>
+            <p><strong>Teléfono:</strong> {lead.Telefono}</p>
+            <p><strong>Tipo de Consulta:</strong> {lead.TipoConsulta}</p>
+            <p><strong>Fecha de Consulta:</strong> {((DateTime)lead.FechaCreacion):dd/MM/yyyy HH:mm}</p>
+        </div>
+
+        <div style=""background-color: #e8f4f8; padding: 20px; border-radius: 8px; margin: 20px 0;"">
+            <h3>Propiedad de Interés</h3>
+            <p><strong>Código:</strong> {lead.Propiedad.Codigo}</p>
+            <p><strong>Tipo:</strong> {lead.Propiedad.Tipo}</p>
+            <p><strong>Ubicación:</strong> {lead.Propiedad.Direccion}, {lead.Propiedad.Barrio}</p>
+            <p><strong>Precio:</strong> {lead.Propiedad.Moneda} {lead.Propiedad.Precio:N0}</p>
+        </div>
+
+        <div style=""background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0;"">
+            <h3>Mensaje del Cliente</h3>
+            <p style=""font-style: italic;"">""{lead.Mensaje}""</p>
+        </div>
+
+        <div style=""background-color: #d4edda; padding: 15px; border-radius: 8px; margin: 20px 0;"">
+            <p><strong>Próximos pasos:</strong></p>
+            <ul>
+                <li>Contactar al cliente dentro de las próximas 24 horas</li>
+                <li>Agendar una visita si corresponde</li>
+                <li>Actualizar el estado del lead en el sistema</li>
+            </ul>
+        </div>
+
+        <p><a href=""http://localhost:3000/admin/leads"" style=""background-color: #2c5aa0; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;"">Gestionar Leads</a></p>
+
+        <hr style=""margin: 30px 0;"">
+        <p style=""font-size: 12px; color: #666;"">
+            Este es un email automático. Por favor no responder a esta dirección.
+        </p>
+    </div>
+</body>
+</html>";
+        }
+
+        private string GenerateLeadConfirmationHtml(dynamic lead, bool isForClient)
+        {
+            return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""utf-8"">
+    <title>Consulta Recibida</title>
+</head>
+<body style=""font-family: Arial, sans-serif; line-height: 1.6; color: #333;"">
+    <div style=""max-width: 600px; margin: 0 auto; padding: 20px;"">
+        <h2 style=""color: #28a745;"">✅ Consulta Recibida</h2>
+
+        <p>Hola {lead.ClienteNombre},</p>
+
+        <p>Hemos recibido tu consulta sobre la propiedad de tu interés. Nuestro equipo la está procesando y pronto un agente especializado se contactará contigo.</p>
+
+        <div style=""background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;"">
+            <h3>Detalles de tu Consulta</h3>
+            <p><strong>Número de consulta:</strong> #{lead.Id}</p>
+            <p><strong>Fecha:</strong> {((DateTime)lead.FechaCreacion):dd/MM/yyyy HH:mm}</p>
+            <p><strong>Tipo:</strong> {lead.TipoConsulta}</p>
+        </div>
+
+        <div style=""background-color: #e8f4f8; padding: 20px; border-radius: 8px; margin: 20px 0;"">
+            <h3>Propiedad Consultada</h3>
+            <p><strong>Código:</strong> {lead.Propiedad.Codigo}</p>
+            <p><strong>Tipo:</strong> {lead.Propiedad.Tipo}</p>
+            <p><strong>Ubicación:</strong> {lead.Propiedad.Direccion}, {lead.Propiedad.Barrio}</p>
+            <p><strong>Precio:</strong> {lead.Propiedad.Moneda} {lead.Propiedad.Precio:N0}</p>
+        </div>
+
+        <div style=""background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0;"">
+            <h3>Tu Mensaje</h3>
+            <p style=""font-style: italic;"">""{lead.Mensaje}""</p>
+        </div>
+
+        <div style=""background-color: #d1ecf1; padding: 15px; border-radius: 8px; margin: 20px 0;"">
+            <p><strong>¿Qué sigue?</strong></p>
+            <ul>
+                <li>Un agente especializado revisará tu consulta</li>
+                <li>Se te asignará un agente dentro de las próximas 24 horas</li>
+                <li>El agente se contactará contigo para coordinar {(lead.TipoConsulta == "Visita" ? "la visita" : "resolver tu consulta")}</li>
+            </ul>
+        </div>
+
+        <p>Si tenés alguna pregunta urgente, podés contactarnos al teléfono: <strong>(11) 4444-5555</strong></p>
+
+        <p>¡Gracias por confiar en nosotros!</p>
+
+        <hr style=""margin: 30px 0;"">
+        <p style=""font-size: 12px; color: #666;"">
+            Este es un email automático. Por favor no responder a esta dirección.<br>
+            Si no solicitaste esta información, por favor ignorá este email.
+        </p>
+    </div>
+</body>
+</html>";
+        }
+
         private string GenerateVisitaConfirmationHtml(dynamic visita, bool isForClient)
         {
             var recipient = isForClient ? visita.ClienteNombre : visita.Agente.Nombre;

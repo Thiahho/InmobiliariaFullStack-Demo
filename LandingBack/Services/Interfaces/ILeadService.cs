@@ -31,5 +31,8 @@ namespace LandingBack.Services.Interfaces
         // Validaciones
         Task<bool> IsDuplicateLeadAsync(string email, int propiedadId, TimeSpan timeWindow);
         Task<bool> IsValidPropiedadAsync(int propiedadId);
+
+        // Generación de visitas
+        Task<(LeadResponseDto Lead, int? VisitaId)> CreateLeadWithVisitaAsync(LeadCreateDto leadCreateDto);
     }
 }

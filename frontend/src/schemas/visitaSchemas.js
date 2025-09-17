@@ -45,7 +45,8 @@ export const agendarVisitaPublicSchema = z.object({
   nombre: z.string().min(2, 'Nombre es requerido').max(100),
   telefono: z.string().min(8, 'Teléfono es requerido').max(20),
   email: z.string().email('Email inválido'),
-  fechaPreferida: z.date('Fecha preferida es requerida'),
+  fechaPreferida: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha preferida es requerida'),
   horaPreferida: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido'),
+  periodo: z.enum(['AM', 'PM']),
   mensaje: z.string().max(500).optional()
 });

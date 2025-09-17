@@ -10,7 +10,12 @@ const nextConfig = {
       'vimeo.com',
       'player.vimeo.com',
       'imgur.com',
-      'dropbox.com'
+      'dropbox.com',
+      'tile.openstreetmap.org',
+      'a.tile.openstreetmap.org',
+      'b.tile.openstreetmap.org',
+      'c.tile.openstreetmap.org',
+      'cdnjs.cloudflare.com'
     ],
     formats: ['image/webp', 'image/avif'],
   },

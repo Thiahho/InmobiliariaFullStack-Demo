@@ -12,11 +12,13 @@ namespace LandingBack.Controllers
     {
         private readonly ILeadService _leadService;
         private readonly ILogger<LeadController> _logger;
+        private readonly IEmailService _emailService;
 
-        public LeadController(ILeadService leadService, ILogger<LeadController> logger)
+        public LeadController(ILeadService leadService, ILogger<LeadController> logger, IEmailService emailService)
         {
             _leadService = leadService;
             _logger = logger;
+            _emailService = emailService;
         }
 
         // GET: api/lead
@@ -342,19 +344,22 @@ namespace LandingBack.Controllers
                 leadCreateDto.IpAddress = GetClientIpAddress();
                 leadCreateDto.UserAgent = Request.Headers.UserAgent.ToString();
 
-                var lead = await _leadService.CreateLeadAsync(leadCreateDto);
-                
-                // TODO: Aquí se podría enviar una notificación automática al agente
-                // o crear directamente una visita en estado "Pendiente"
-                
+                // Crear lead y visita automáticamente
+                var (lead, visitaId) = await _leadService.CreateLeadWithVisitaAsync(leadCreateDto);
+
                 // Respuesta para solicitud de visita
-                return Ok(new
+                var response = new
                 {
                     Success = true,
-                    Message = "Solicitud de visita enviada correctamente. Un agente se contactará contigo dentro de las próximas 2 horas.",
+                    Message = "Solicitud de visita recibida correctamente. Un administrador asignará un agente especializado que se contactará contigo para coordinar la visita.",
                     LeadId = lead.Id,
-                    TipoConsulta = "Visita"
-                });
+                    VisitaId = visitaId,
+                    TipoConsulta = "Visita",
+                    AgenteAsignado = lead.AgenteAsignadoNombre,
+                    EstadoAsignacion = lead.AgenteAsignadoId.HasValue ? "Asignado" : "Pendiente de asignación"
+                };
+
+                return Ok(response);
             }
             catch (ArgumentException ex)
             {
@@ -427,6 +432,32 @@ namespace LandingBack.Controllers
             return $"https://wa.me/{whatsappNumber}?text={encodedMessage}";
         }
 
+        // POST: api/lead/test-email
+        [HttpPost("test-email")]
+        public async Task<ActionResult> TestEmail([FromBody] TestEmailDto testDto)
+        {
+            try
+            {
+                await _emailService.SendEmailAsync(
+                    testDto.ToEmail,
+                    "Test Email - Inmobiliaria",
+                    "<h1>Test Email</h1><p>Si recibes este email, la configuración está funcionando correctamente.</p>"
+                );
+
+                return Ok(new { Success = true, Message = "Email de prueba enviado exitosamente" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error enviando email de prueba");
+                return StatusCode(500, new { Success = false, Message = ex.Message });
+            }
+        }
+
         #endregion
+    }
+
+    public class TestEmailDto
+    {
+        public string ToEmail { get; set; } = "";
     }
 }
