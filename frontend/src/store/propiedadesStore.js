@@ -192,11 +192,20 @@ export const usePropiedadesStore = create((set, get) => ({
   updatePropiedad: async (id, propiedadData) => {
     set({ loading: true, error: null });
     try {
-      await axiosClient.put(`/propiedades/${id}`, { ...propiedadData, id });
-      
+      console.log("📤 Enviando actualización de propiedad:", { id, data: propiedadData });
+
+      // Limpiar campos undefined/null para evitar problemas
+      const cleanedData = Object.fromEntries(
+        Object.entries(propiedadData).filter(([_, value]) => value !== undefined)
+      );
+
+      console.log("📤 Datos limpios enviados:", cleanedData);
+
+      await axiosClient.put(`/propiedades/${id}`, { ...cleanedData, id });
+
       // Actualizar lista local
       set(state => ({
-        propiedades: (state.propiedades || []).map(p => 
+        propiedades: (state.propiedades || []).map(p =>
           p.id === id ? { ...p, ...propiedadData } : p
         ),
         loading: false
@@ -211,8 +220,26 @@ export const usePropiedadesStore = create((set, get) => ({
 
       toast.success("Propiedad actualizada exitosamente");
     } catch (error) {
-      console.error("Error al actualizar propiedad:", error);
-      const message = error.response?.data?.message || "Error al actualizar propiedad";
+      console.error("❌ Error detallado al actualizar propiedad:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        propiedadData
+      });
+
+      let message = "Error al actualizar propiedad";
+
+      if (error.response?.data) {
+        if (typeof error.response.data === 'string') {
+          message = error.response.data;
+        } else if (error.response.data.message) {
+          message = error.response.data.message;
+        } else if (error.response.data.errors) {
+          message = `Errores de validación: ${Object.values(error.response.data.errors).join(', ')}`;
+        }
+      }
+
       set({ error: message, loading: false });
       toast.error(message);
       throw error;

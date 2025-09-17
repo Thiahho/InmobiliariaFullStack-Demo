@@ -10,21 +10,60 @@ const Projects = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch projects from backend
+  // Fetch featured projects from backend
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:5174/api/propiedades");
+        // Buscar solo propiedades destacadas usando búsqueda avanzada
+        const response = await fetch(
+          "http://localhost:5174/api/propiedades/buscar-avanzada",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              destacado: true,
+              estado: "Activo",
+              page: 1,
+              pageSize: 10, // Limitar a 10 propiedades destacadas
+            }),
+          }
+        );
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json();
+
+        const result = await response.json();
+        // Extraer el array de propiedades del resultado
+        const data = result.data || result.Data || [];
+
+        console.log("🏠 Propiedades destacadas cargadas:", data.length);
         setProjectsData(data);
         setError(null);
       } catch (err) {
         setError(err.message);
-        console.error("Error fetching projects:", err);
+        console.error("Error fetching featured projects:", err);
+        // Fallback: intentar con el endpoint simple y filtrar localmente
+        try {
+          const response = await fetch("http://localhost:5174/api/propiedades");
+          if (response.ok) {
+            const allData = await response.json();
+            const featuredData = allData.filter(
+              (prop) => prop.destacado === true && prop.estado === "Activo"
+            );
+            setProjectsData(featuredData);
+            setError(null);
+            console.log(
+              "🏠 Fallback: Propiedades destacadas filtradas localmente:",
+              featuredData.length
+            );
+          }
+        } catch (fallbackErr) {
+          console.error("Error en fallback:", fallbackErr);
+        }
       } finally {
         setLoading(false);
       }
@@ -68,20 +107,23 @@ const Projects = () => {
       id="Projects"
     >
       <h1 className="text-2xl sm:text-4xl font-bold mb-2 text-center">
-        Proyectos{" "}
+        Propiedades{" "}
         <span className="underline underline-offset-4 decoration-1 under font-light">
-          Completos
+          Destacadas
         </span>
       </h1>
       <p className="text-center text-gray-500 mb-8 max-w-80 mx-auto">
-        Creando espacios, construyendo legados: explora nuestro portafolio
+        Descubre nuestras mejores propiedades seleccionadas especialmente para
+        ti
       </p>
 
       {/* Loading state */}
       {loading && (
         <div className="text-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="mt-2 text-gray-600">Cargando propiedades...</p>
+          <p className="mt-2 text-gray-600">
+            Cargando propiedades destacadas...
+          </p>
         </div>
       )}
 
@@ -89,7 +131,7 @@ const Projects = () => {
       {error && (
         <div className="text-center py-8">
           <p className="text-red-600 mb-4">
-            Error al cargar las propiedades: {error}
+            Error al cargar las propiedades destacadas: {error}
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -100,26 +142,54 @@ const Projects = () => {
         </div>
       )}
 
-      {/* Content - only show if not loading and no error */}
-      {!loading && !error && (
+      {/* No featured properties message */}
+      {!loading && !error && projectsData.length === 0 && (
+        <div className="text-center py-12">
+          <div className="text-gray-400 mb-4">
+            <svg
+              className="mx-auto h-12 w-12"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+              />
+            </svg>
+          </div>
+          <p className="text-gray-600 text-lg mb-2">
+            No hay propiedades destacadas disponibles
+          </p>
+          <p className="text-gray-500 text-sm">
+            Pronto tendremos nuevas propiedades destacadas para mostrar
+          </p>
+        </div>
+      )}
+
+      {/* Content - only show if not loading and no error and has data */}
+      {!loading && !error && projectsData.length > 0 && (
         <>
           {/* slider buttons */}
-          <div className="flex justify-end items-center mb-8">
+          <div className="flex justify-end items-center mb-8 gap-2">
             <button
               onClick={prevProject}
-              className="p-3 bg-gray-200 rounded-full mr-2 hover:bg-gray-300"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-400 text-white hover:bg-gray-500 transition-colors duration-200"
               aria-label="Previous Project"
             >
-              <img src={assets.left_arrow} alt="Previous" />
+              ←
             </button>
             <button
               onClick={nextProject}
-              className="p-3 bg-gray-200 rounded-full mr-2 hover:bg-gray-300"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-400 text-white hover:bg-gray-500 transition-colors duration-200"
               aria-label="Next Project"
             >
-              <img src={assets.right_arrow} alt="Next" />
+              →
             </button>
           </div>
+
           {/* projject slider container */}
           <div className="overflow-hidden">
             <div
@@ -138,8 +208,12 @@ const Projects = () => {
                   <img
                     src={(() => {
                       if (project.medias && project.medias.length > 0) {
-                        const mediaUrl = project.medias.find((media) => media.esPrincipal)?.url || project.medias[0]?.url;
-                        return mediaUrl.startsWith('http') ? mediaUrl : `http://localhost:5174${mediaUrl}`;
+                        const mediaUrl =
+                          project.medias.find((media) => media.esPrincipal)
+                            ?.url || project.medias[0]?.url;
+                        return mediaUrl.startsWith("http")
+                          ? mediaUrl
+                          : `http://localhost:5174${mediaUrl}`;
                       }
                       return "/image.png";
                     })()}

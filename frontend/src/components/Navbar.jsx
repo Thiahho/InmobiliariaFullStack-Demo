@@ -49,26 +49,32 @@ const Navbar = () => {
             </a>
           </li>
           <li>
-            <a href="" className="cursor-pointer hover:text-gray-400">
-              Generar Visita
-            </a>
+            <Link href="/propiedades" className="cursor-pointer hover:text-gray-400">
+              Propiedades
+            </Link>
           </li>
         </ul>
         {isAuthenticated ? (
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/perfil" className="inline-flex items-center gap-2 bg-white/90 px-4 py-2 rounded-full text-black hover:bg-white">
+            <Link
+              href="/perfil"
+              className="inline-flex items-center gap-2 bg-white/90 px-4 py-2 rounded-full text-black hover:bg-white"
+            >
               <UserCircleIcon className="w-5 h-5" />
               Perfil
             </Link>
-            <Link href="/admin" className="inline-flex items-center gap-2 bg-white/90 px-4 py-2 rounded-full text-black hover:bg-white">
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-2 bg-white/90 px-4 py-2 rounded-full text-black hover:bg-white"
+            >
               Panel
             </Link>
           </div>
         ) : (
-          <button 
-            type="button" 
-            aria-label="Iniciar Sesión" 
-            onClick={() => setShowLogin(true)} 
+          <button
+            type="button"
+            aria-label="Iniciar Sesión"
+            onClick={() => setShowLogin(true)}
             className="hidden md:block bg-white px-8 py-2 rounded-full text-black hover:bg-gray-100 transition"
           >
             Iniciar Sesión
@@ -135,6 +141,13 @@ const Navbar = () => {
           >
             Testimonios
           </a>
+          <Link
+            href="/propiedades"
+            onClick={() => setMobileMenu(false)}
+            className="px-4 py-2 rounded-full inline-block text-black hover:bg-gray-100"
+          >
+            Propiedades
+          </Link>
           {isAuthenticated ? (
             <>
               <Link

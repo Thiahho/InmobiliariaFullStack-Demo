@@ -99,12 +99,21 @@ const PropiedadForm = ({ propiedadId = null, onSuccess = null }) => {
 
   const onSubmit = async (data) => {
     try {
+      console.log("📝 Datos del formulario:", data);
+
       // Tipos de propiedades que no requieren ciertos campos
       const tiposQueNoRequierenAmbientes = ['Terreno', 'Cochera', 'Galpon'];
 
       const propiedadData = {
-        ...data,
-        amenities: amenitiesSeleccionados,
+        codigo: data.codigo?.trim() || '',
+        tipo: data.tipo || '',
+        operacion: data.operacion || 'Venta',
+        barrio: data.barrio?.trim() || '',
+        comuna: data.comuna?.trim() || '',
+        direccion: data.direccion?.trim() || '',
+        latitud: data.latitud ? parseFloat(data.latitud) : null,
+        longitud: data.longitud ? parseFloat(data.longitud) : null,
+        moneda: data.moneda || 'USD',
         precio: parseFloat(data.precio) || 0,
         expensas: data.expensas ? parseFloat(data.expensas) : null,
         ambientes: tiposQueNoRequierenAmbientes.includes(data.tipo)
@@ -116,9 +125,17 @@ const PropiedadForm = ({ propiedadId = null, onSuccess = null }) => {
         metrosTotales: data.metrosTotales ? parseInt(data.metrosTotales) : null,
         antiguedad: data.antiguedad ? parseInt(data.antiguedad) : null,
         piso: data.piso ? parseInt(data.piso) : null,
-        latitud: data.latitud ? parseFloat(data.latitud) : null,
-        longitud: data.longitud ? parseFloat(data.longitud) : null
+        // Asegurar que los booleanos sean realmente booleanos
+        cochera: Boolean(data.cochera),
+        aptoCredito: Boolean(data.aptoCredito),
+        destacado: Boolean(data.destacado),
+        estado: data.estado || 'Activo',
+        titulo: data.titulo?.trim() || '',
+        descripcion: data.descripcion?.trim() || '',
+        amenities: amenitiesSeleccionados || {}
       };
+
+      console.log("📤 Datos procesados para envío:", propiedadData);
 
       if (propiedadId) {
         await updatePropiedad(propiedadId, propiedadData);
