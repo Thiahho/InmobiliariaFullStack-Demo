@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { assets } from "../assets/assets/assets";
 import { motion } from "framer-motion";
+import PropiedadDetail from "./propiedades/PropiedadDetail";
 
 const Projects = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -9,6 +10,7 @@ const Projects = () => {
   const [projectsData, setProjectsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedPropertyId, setSelectedPropertyId] = useState(null);
 
   // Fetch featured projects from backend
   useEffect(() => {
@@ -231,11 +233,17 @@ const Projects = () => {
                         {project.titulo ||
                           `${project.tipo} en ${project.barrio}`}
                       </h2>
-                      <p className="text-gray-500 text-sm">
+                      <p className="text-gray-500 text-sm mb-3">
                         {project.moneda} {project.precio?.toLocaleString()}{" "}
                         <span className="px-1">|</span> {project.barrio},{" "}
                         {project.comuna}
                       </p>
+                      <button
+                        onClick={() => setSelectedPropertyId(project.id)}
+                        className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                      >
+                        Ver Propiedad
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -243,6 +251,14 @@ const Projects = () => {
             </div>
           </div>
         </>
+      )}
+
+      {/* Componente PropiedadDetail */}
+      {selectedPropertyId && (
+        <PropiedadDetail
+          propiedadId={selectedPropertyId}
+          onClose={() => setSelectedPropertyId(null)}
+        />
       )}
     </motion.div>
   );
