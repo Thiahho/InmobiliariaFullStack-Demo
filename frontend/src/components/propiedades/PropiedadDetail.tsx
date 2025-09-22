@@ -626,6 +626,18 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
 
               <div className="mt-6 space-y-3">
                 <button
+                  onClick={() => {
+                    const phoneNumber = "+541122692061"; // Reemplazar con tu número de WhatsApp
+                    const propertyInfo = `Hola! Me interesa la propiedad:
+${propiedadActual.titulo || `${propiedadActual.tipo} en ${propiedadActual.barrio}`}
+📍 ${propiedadActual.direccion}${propiedadActual.barrio ? `, ${propiedadActual.barrio}` : ''}
+💰 ${formatPrice(propiedadActual.precio, propiedadActual.moneda || "USD")}
+🏠 ${propiedadActual.ambientes} ambientes
+📋 Código: ${propiedadActual.codigo}`;
+
+                    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(propertyInfo)}`;
+                    window.open(whatsappUrl, '_blank');
+                  }}
                   className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                   type="button"
                 >
