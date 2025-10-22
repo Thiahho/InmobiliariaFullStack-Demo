@@ -26,3 +26,41 @@ lerna-debug.log*
 # .NET
 **/bin/
 **/obj/
+**/out/
+**/publish/
+*.dll
+*.exe
+*.pdb
+
+# .NET Logs
+LandingBack/logs/
+**/logs/
+
+# .NET User-specific files
+*.rsuser
+*.user
+*.userosscache
+*.sln.docstates
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+**/.env.production
+**/.env.development
+
+# Uploads (archivos subidos por usuarios)
+**/wwwroot/uploads/
+LandingBack/wwwroot/uploads/
+
+# appsettings con secretos (solo para desarrollo)
+# Nota: appsettings.Production.json SÍ debe ir al repo (vacío)
+**/appsettings.Development.json
+# NO ignorar appsettings.json para que esté en el repo como template
+
+# Database
+*.db
+*.db-shm
+*.db-wal

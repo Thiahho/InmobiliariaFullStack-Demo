@@ -35,16 +35,14 @@ builder.Services.AddAutoMapper(typeof(Program).Assembly);
 // Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
+    options.AddPolicy("AllowAll", corsBuilder =>
     {
-        builder
-            .WithOrigins(
-                "http://localhost:3000", 
-                "https://localhost:3000",
-                "http://localhost:3001", 
-                "https://localhost:3001",
-                "http://localhost:3002",
-                "https://localhost:3002") // Add your frontend URLs
+        // Leer orígenes permitidos desde configuración
+        var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+            ?? new[] { "http://localhost:3000" }; // Fallback si no hay configuración
+
+        corsBuilder
+            .WithOrigins(allowedOrigins)
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials();
@@ -52,9 +50,10 @@ builder.Services.AddCors(options =>
 });
 
 // Add Authentication & JWT
-var jwtKey = builder.Configuration["Jwt:Key"];
-var jwtIssuer = builder.Configuration["Jwt:Issuer"];
-var jwtAudience = builder.Configuration["Jwt:Audience"];
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("JWT Key is not configured. Set the 'Jwt:Key' environment variable.");
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "InmobiliariaApp";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "InmobiliariaApp";
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -67,7 +66,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtIssuer,
             ValidAudience = jwtAudience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ClockSkew = TimeSpan.Zero
         };
     });

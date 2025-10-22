@@ -70,9 +70,9 @@ export default function VisitasAdmin() {
   // Cargar datos cuando el usuario esté autenticado
   const initializedRef = useRef(false);
   useEffect(() => {
-    // console.log('🔍 VisitasAdmin useEffect:', { isInitialized, isAuthenticated, hasInitialized: initializedRef.current });
+    console.log('🔍 VisitasAdmin useEffect:', { isInitialized, isAuthenticated, hasInitialized: initializedRef.current });
     if (!isInitialized || !isAuthenticated || initializedRef.current) return;
-    // console.log('✅ Ejecutando cargarDatos en VisitasAdmin');
+    console.log('✅ Ejecutando cargarDatos en VisitasAdmin');
     initializedRef.current = true;
 
     const { cargarAgentes } = useVisitasStore.getState();
@@ -81,12 +81,14 @@ export default function VisitasAdmin() {
 
   // Cargar visitas cuando cambie la vista a lista o cambien filtros en vista lista
   useEffect(() => {
+    console.log('🔍 VisitasAdmin cargarVisitas useEffect:', { vistaActiva, isAuthenticated, agenteSeleccionado, estadoFiltro });
     if (vistaActiva === "lista" && isAuthenticated) {
       const { setFiltros, cargarVisitas } = useVisitasStore.getState();
       setFiltros({
         agenteId: agenteSeleccionado,
         estado: estadoFiltro || undefined,
       });
+      console.log('📡 Llamando cargarVisitas...');
       cargarVisitas();
     }
   }, [vistaActiva, agenteSeleccionado, estadoFiltro, isAuthenticated]);
@@ -374,6 +376,14 @@ export default function VisitasAdmin() {
               )}
 
               {/* Lista de visitas */}
+              {(() => {
+                console.log("🔍 Estado actual de visitas:", {
+                  visitasLength: visitas.length,
+                  visitas: visitas,
+                  loading: loading
+                });
+                return null;
+              })()}
               {visitas.length === 0 ? (
                 <div className="text-center py-8">
                   <CalendarDaysIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />

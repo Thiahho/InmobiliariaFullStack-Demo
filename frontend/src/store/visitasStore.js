@@ -46,72 +46,47 @@ export const useVisitasStore = create((set, get) => ({
     try {
       const { filtros } = get();
       const params = new URLSearchParams();
-      
-      // Para cargar todas las visitas, usamos un rango de fechas amplio si no está especificado
-      if (!filtros.fechaDesde) {
-        const haceUnMes = new Date();
-        haceUnMes.setMonth(haceUnMes.getMonth() - 1);
-        params.append('fechaDesde', haceUnMes.toISOString());
-      }
-      
-      if (!filtros.fechaHasta) {
-        const enTresMeses = new Date();
-        enTresMeses.setMonth(enTresMeses.getMonth() + 3);
-        params.append('fechaHasta', enTresMeses.toISOString());
-      }
-      
+
+      // Aplicar filtros solo si están definidos
       Object.entries(filtros).forEach(([key, value]) => {
         if (value !== null && value !== '' && value !== undefined) {
           if (value instanceof Date) {
             params.append(key, value.toISOString());
           } else if (key === 'agenteId' && value) {
             params.append(key, value.toString());
+          } else if (key === 'estado' && value) {
+            params.append(key, value);
+          } else if (key === 'page' || key === 'pageSize') {
+            params.append(key, value.toString());
           }
         }
       });
 
-      // Usar el endpoint de calendar que funciona
-      const response = await axiosClient.get(`/visita/calendar?${params}`);
-      
-      // Transformar datos del formato calendar al formato esperado por el componente
-      const visitasTransformadas = (response.data || []).map(visita => {
-        // Extraer información del description
-        const lines = visita.description?.split('\n') || [];
-        const clienteLine = lines.find(line => line.startsWith('Cliente:'));
-        const propiedadLine = lines.find(line => line.startsWith('Propiedad:'));
-        const agenteLine = lines.find(line => line.startsWith('Agente:'));
-        
-        // Extraer código de propiedad del title
-        const codigoMatch = visita.title?.match(/- (\d+)$/);
-        
-        return {
-          id: visita.id,
-          propiedadCodigo: codigoMatch ? codigoMatch[1] : 'N/A',
-          propiedadDireccion: propiedadLine ? propiedadLine.replace('Propiedad: ', '') : 'N/A',
-          clienteNombre: clienteLine ? clienteLine.replace('Cliente: ', '') : 'N/A',
-          clienteTelefono: '',
-          clienteEmail: '',
-          agenteNombre: agenteLine ? agenteLine.replace('Agente: ', '') : 'N/A',
-          fechaHora: visita.start,
-          duracionMinutos: visita.end && visita.start ? 
-            Math.round((new Date(visita.end) - new Date(visita.start)) / (1000 * 60)) : 60,
-          estado: visita.estado || 'Pendiente',
-          observaciones: '',
-          fechaCreacion: visita.start
-        };
-      });
-      
+      console.log('🔍 Cargando visitas con filtros:', filtros);
+      console.log('📡 URL de petición:', `/visita?${params}`);
+
+      // Usar el endpoint principal de visitas que devuelve datos paginados
+      const response = await axiosClient.get(`/visita?${params}`);
+      console.log('✅ Respuesta del servidor:', response.data);
+
+      // El endpoint /visita devuelve { visitas, totalCount, page, pageSize, totalPages }
+      const { visitas = [], totalCount = 0, totalPages = 0 } = response.data;
+
       set({
-        visitas: visitasTransformadas,
-        totalCount: visitasTransformadas.length,
-        totalPages: 1,
+        visitas: visitas,
+        totalCount: totalCount,
+        totalPages: totalPages,
         loading: false
       });
+
+      console.log('✅ Visitas cargadas exitosamente:', visitas.length);
     } catch (error) {
-      console.error('Error cargando visitas:', error);
-      set({ 
+      console.error('❌ Error cargando visitas:', error);
+      console.error('❌ Respuesta del error:', error.response);
+      set({
         error: error.response?.data?.message || 'Error al cargar visitas',
-        loading: false
+        loading: false,
+        visitas: []
       });
     }
   },
