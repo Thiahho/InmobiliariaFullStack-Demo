@@ -8,11 +8,19 @@ import { axiosClient } from "../../lib/axiosClient";
 import PropiedadesSection from "../../components/propiedades/PropiedadesSection";
 // import TestPropiedades from '../../components/propiedades/TestPropiedades';
 
+// Definir la interfaz Visita FUERA del componente con todas las propiedades necesarias
+interface Visita {
+  id: string | number;
+  clienteNombre: string;
+  propiedadDireccion?: string;
+  fechaHora: string;
+}
+
 export default function AdminPage() {
   const { isAuthenticated, user, role, logout } = useAuthStore();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [userVisits, setUserVisits] = useState([]);
+  const [userVisits, setUserVisits] = useState<Visita[]>([]); // ✅ Tipado correcto
   const [loadingVisits, setLoadingVisits] = useState(false);
 
   useEffect(() => {
@@ -362,7 +370,8 @@ export default function AdminPage() {
                             {visita.clienteNombre}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {visita.propiedadDireccion || 'Dirección no disponible'}
+                            {visita.propiedadDireccion ||
+                              "Dirección no disponible"}
                           </p>
                         </div>
                         <div className="text-right">
@@ -371,8 +380,8 @@ export default function AdminPage() {
                           </p>
                           <p className="text-xs text-gray-500">
                             {new Date(visita.fechaHora).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit'
+                              hour: "2-digit",
+                              minute: "2-digit",
                             })}
                           </p>
                         </div>
@@ -381,7 +390,9 @@ export default function AdminPage() {
                   </div>
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-sm text-gray-500">No tienes visitas asignadas</p>
+                    <p className="text-sm text-gray-500">
+                      No tienes visitas asignadas
+                    </p>
                   </div>
                 )}
               </div>
