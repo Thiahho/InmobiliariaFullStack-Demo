@@ -1,0 +1,42 @@
+# Build artifacts
+bin/
+obj/
+out/
+publish/
+
+# Development files
+*.user
+*.suo
+*.cache
+*.vscode/
+.vs/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Environment files
+appsettings.Development.json
+*.Development.json
+
+# Uploads (archivos locales)
+wwwroot/uploads/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+
+# Tests
+*Tests/
+*.Tests/
+
+# Temporary files
+*.tmp
+*.temp
+*~
