@@ -175,7 +175,7 @@ export default function AgendaSemanal({
         )?.nombre;
         if (agenteNombre) {
           visitasStore = visitasStore.filter(
-            (visita) => visita.agenteNombre === agenteNombre
+            (visita: any) => visita.agenteNombre === agenteNombre
           );
           console.log(
             "🔍 Filtrado por agente:",
