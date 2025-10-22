@@ -29,12 +29,12 @@ COPY --from=build /app/publish .
 # Crear directorio para logs (opcional)
 RUN mkdir -p /app/logs && chmod 777 /app/logs
 
-# Exponer el puerto (Render usa la variable de entorno PORT)
-EXPOSE 8080
-
 # Variables de entorno por defecto
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:8080
+
+# ⚠️ IMPORTANTE: Usar $PORT dinámico de Render (NO puerto fijo)
+# Render asigna el puerto automáticamente
+ENV ASPNETCORE_URLS=http://+:$PORT
 
 # Ejecutar la aplicación
 ENTRYPOINT ["dotnet", "LandingBack.dll"]
