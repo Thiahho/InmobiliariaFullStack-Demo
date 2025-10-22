@@ -188,7 +188,7 @@ export default function AgendaSemanal({
 
       if (estadoFiltro && estadoFiltro !== "") {
         visitasStore = visitasStore.filter(
-          (visita) => visita.estado === estadoFiltro
+          (visita: any) => visita.estado === estadoFiltro
         );
         console.log(
           "🔍 Filtrado por estado:",
