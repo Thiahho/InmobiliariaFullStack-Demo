@@ -139,7 +139,7 @@ export default function AgendaSemanal({
 
   // Obtener visitas para un día específico
   const obtenerVisitasDia = (fecha: Date): VisitaCalendar[] => {
-    return visitasCalendario.filter((visita) => {
+    return visitasCalendario.filter((visita: any) => {
       if (!visita.start) return false;
       try {
         const fechaVisita = new Date(visita.start);
@@ -200,7 +200,7 @@ export default function AgendaSemanal({
 
       if (visitasStore && visitasStore.length > 0) {
         // Convertir formato de store a formato de calendario
-        const visitasCalendario = visitasStore.map((visita) => ({
+        const visitasCalendario = visitasStore.map((visita: any) => ({
           id: visita.id,
           title: `${visita.propiedadCodigo} - ${visita.clienteNombre}`,
           start: visita.fechaHora,
@@ -342,7 +342,7 @@ export default function AgendaSemanal({
                   onClick={() => handleNuevaVisita(dia, hora)}
                 >
                   {/* Visitas en esta hora */}
-                  {visitasHora.map((visita) => {
+                  {visitasHora.map((visita: any) => {
                     console.log(
                       "🎨 Aplicando color para visita:",
                       visita.id,
