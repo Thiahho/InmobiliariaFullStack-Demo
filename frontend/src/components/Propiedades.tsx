@@ -55,8 +55,12 @@ const Propiedades: React.FC = () => {
                   alt="Logo"
                   className="w-32 h-auto"
                   onError={(e) => {
-                    e.target.style.display = "none";
-                    e.target.nextSibling.style.display = "block";
+                    const target = e.currentTarget as HTMLImageElement;
+                    target.style.display = "none";
+                    const nextSibling = target.nextElementSibling as HTMLElement | null;
+                    if (nextSibling) {
+                      nextSibling.style.display = "block";
+                    }
                   }}
                 />
                 <span className="ml-2 text-xl font-bold text-gray-900 hidden">
