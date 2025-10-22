@@ -81,13 +81,13 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
 
   // Filtros locales
   const [filtros, setFiltros] = useState<Filtros>({
-    operacion: '',
-    tipo: '',
-    barrio: '',
-    estado: 'Activo',
-    searchTerm: '',
+    operacion: "",
+    tipo: "",
+    barrio: "",
+    estado: "Activo",
+    searchTerm: "",
     page: 1,
-    pageSize: 20
+    pageSize: 20,
   });
 
   // Paginación local
@@ -95,7 +95,7 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
     currentPage: 1,
     pageSize: 20,
     totalPages: 0,
-    totalCount: 0
+    totalCount: 0,
   });
 
   // Función para cargar propiedades desde el backend
@@ -104,13 +104,15 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
     setError(null);
 
     try {
-      const filtrosFinales = filtrosCustom || { ...filtros, estado: 'Activo' };
+      const filtrosFinales = filtrosCustom || { ...filtros, estado: "Activo" };
 
       // Verificar si hay filtros activos
       const hasFilters = Object.entries(filtrosFinales).some(([key, value]) => {
-        if (key === 'page' || key === 'pageSize' || key === 'estado') return false;
-        if (key === 'searchTerm') return value !== '' && value !== null && value !== undefined;
-        return value !== '' && value !== null && value !== undefined;
+        if (key === "page" || key === "pageSize" || key === "estado")
+          return false;
+        if (key === "searchTerm")
+          return value !== "" && value !== null && value !== undefined;
+        return value !== "" && value !== null && value !== undefined;
       });
 
       let response;
@@ -123,18 +125,21 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
           operacion: filtrosFinales.operacion || null,
           tipo: filtrosFinales.tipo || null,
           barrio: filtrosFinales.barrio || null,
-          estado: 'Activo', // Siempre filtrar solo activas para público
-          searchTerm: filtrosFinales.searchTerm || null
+          estado: "Activo", // Siempre filtrar solo activas para público
+          searchTerm: filtrosFinales.searchTerm || null,
         };
 
         console.log("🚀 Enviando búsqueda pública:", searchData);
-        response = await axiosPublic.post("/propiedades/buscar-avanzada", searchData);
+        response = await axiosPublic.post(
+          "/propiedades/buscar-avanzada",
+          searchData
+        );
       } else {
         // Usar endpoint simple
         const params = new URLSearchParams();
-        params.append('pagina', String(filtrosFinales.page || 1));
-        params.append('tamanoPagina', String(filtrosFinales.pageSize || 20));
-        params.append('estado', 'Activo');
+        params.append("pagina", String(filtrosFinales.page || 1));
+        params.append("tamanoPagina", String(filtrosFinales.pageSize || 20));
+        params.append("estado", "Activo");
 
         response = await axiosPublic.get(`/propiedades/paginadas?${params}`);
       }
@@ -151,13 +156,15 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
         totalCount,
         totalPages: totalPaginas,
         currentPage: pagina,
-        pageSize: tamanoPagina
+        pageSize: tamanoPagina,
       });
 
       console.log("✅ Propiedades cargadas:", data.length);
     } catch (error) {
       console.error("❌ Error al cargar propiedades:", error);
-      setError(error.response?.data?.message || "Error al cargar propiedades");
+      const errorMessage =
+        error instanceof Error ? error.message : "Error al cargar propiedades";
+      setError(errorMessage);
       setPropiedades([]);
       toast.error("Error al cargar propiedades");
     } finally {
@@ -188,13 +195,13 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
 
   const handleResetFilters = () => {
     const defaultFilters = {
-      operacion: '',
-      tipo: '',
-      barrio: '',
-      estado: 'Activo',
-      searchTerm: '',
+      operacion: "",
+      tipo: "",
+      barrio: "",
+      estado: "Activo",
+      searchTerm: "",
       page: 1,
-      pageSize: 20
+      pageSize: 20,
     };
     setFiltros(defaultFilters);
     setSearchTerm("");
@@ -239,7 +246,8 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
       if (fileIdMatch) fileId = fileIdMatch[1];
       const openIdMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
       if (openIdMatch && !fileId) fileId = openIdMatch[1];
-      if (fileId) return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+      if (fileId)
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
     }
     return url;
   };
@@ -250,7 +258,10 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
     if (principalMedia.url.startsWith("http")) {
       return convertGoogleDriveUrl(principalMedia.url);
     }
-    const base = (import.meta as any)?.env?.VITE_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5174";
+    const base =
+      (import.meta as any)?.env?.VITE_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "http://localhost:5174";
     return `${base}${principalMedia.url}`;
   };
 
@@ -301,10 +312,14 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Operación</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Operación
+                </label>
                 <select
                   value={String(filtros.operacion ?? "")}
-                  onChange={(e) => handleFilterChange("operacion", e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange("operacion", e.target.value)
+                  }
                   className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="">Todas</option>
@@ -314,7 +329,9 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo
+                </label>
                 <select
                   value={String(filtros.tipo ?? "")}
                   onChange={(e) => handleFilterChange("tipo", e.target.value)}
@@ -330,7 +347,9 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Barrio</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Barrio
+                </label>
                 <input
                   type="text"
                   value={String(filtros.barrio ?? "")}
@@ -389,18 +408,26 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
                           src={imgUrl}
                           alt={propiedad.titulo || propiedad.codigo}
                           className="w-full h-full object-cover"
-                          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                          onError={(
+                            e: React.SyntheticEvent<HTMLImageElement>
+                          ) => {
                             const el = e.currentTarget;
                             const originalUrl = imgUrl;
-                            if (originalUrl.includes("thumbnail") && originalUrl.includes("drive.google.com")) {
-                              const fileIdMatch = originalUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                            if (
+                              originalUrl.includes("thumbnail") &&
+                              originalUrl.includes("drive.google.com")
+                            ) {
+                              const fileIdMatch = originalUrl.match(
+                                /[?&]id=([a-zA-Z0-9_-]+)/
+                              );
                               if (fileIdMatch) {
                                 el.src = `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
                                 return;
                               }
                             }
                             el.style.display = "none";
-                            el.parentElement && ((el.parentElement as any).innerHTML = `
+                            el.parentElement &&
+                              ((el.parentElement as any).innerHTML = `
                               <div class="w-full h-full flex items-center justify-center bg-gray-200">
                                 <div class="text-center">
                                   <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -416,7 +443,9 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
                         <div className="w-full h-full flex items-center justify-center bg-gray-200">
                           <div className="text-center">
                             <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-                            <p className="mt-2 text-sm text-gray-500">Sin imagen</p>
+                            <p className="mt-2 text-sm text-gray-500">
+                              Sin imagen
+                            </p>
                           </div>
                         </div>
                       )}
@@ -429,8 +458,8 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
                         }}
                         className={`absolute top-2 right-2 p-2 rounded-full ${
                           isFavorite
-                            ? 'bg-red-500 text-white'
-                            : 'bg-white bg-opacity-80 text-gray-600 hover:bg-red-500 hover:text-white'
+                            ? "bg-red-500 text-white"
+                            : "bg-white bg-opacity-80 text-gray-600 hover:bg-red-500 hover:text-white"
                         } transition-colors`}
                         type="button"
                       >
@@ -450,7 +479,10 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
                             <h3 className="text-lg font-semibold text-gray-900">
-                              {propiedad.titulo || `${propiedad.tipo ?? ""} en ${propiedad.barrio ?? ""}`}
+                              {propiedad.titulo ||
+                                `${propiedad.tipo ?? ""} en ${
+                                  propiedad.barrio ?? ""
+                                }`}
                             </h3>
                           </div>
 
@@ -464,27 +496,44 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
                               <HomeIcon className="h-4 w-4 mr-1" />
                               {propiedad.ambientes} amb
                             </div>
-                            {propiedad.dormitorios ? <div>🛏️ {propiedad.dormitorios} dorm</div> : null}
-                            {propiedad.banos ? <div>🚿 {propiedad.banos} baños</div> : null}
-                            {propiedad.metrosCubiertos ? <div>📐 {propiedad.metrosCubiertos} m²</div> : null}
+                            {propiedad.dormitorios ? (
+                              <div>🛏️ {propiedad.dormitorios} dorm</div>
+                            ) : null}
+                            {propiedad.banos ? (
+                              <div>🚿 {propiedad.banos} baños</div>
+                            ) : null}
+                            {propiedad.metrosCubiertos ? (
+                              <div>📐 {propiedad.metrosCubiertos} m²</div>
+                            ) : null}
                           </div>
 
                           <div className="flex items-center space-x-4 mb-3">
                             <div className="flex items-center text-lg font-bold text-green-600">
                               <CurrencyDollarIcon className="h-5 w-5 mr-1" />
-                              {formatPrice(propiedad.precio, propiedad.moneda || "USD")}
+                              {formatPrice(
+                                propiedad.precio,
+                                propiedad.moneda || "USD"
+                              )}
                             </div>
-                            <span className="text-sm text-gray-500 capitalize">{propiedad.operacion}</span>
+                            <span className="text-sm text-gray-500 capitalize">
+                              {propiedad.operacion}
+                            </span>
                             {typeof propiedad.expensas === "number" && (
                               <span className="text-sm text-gray-500">
-                                + {formatPrice(propiedad.expensas, propiedad.moneda || "USD")} exp.
+                                +{" "}
+                                {formatPrice(
+                                  propiedad.expensas,
+                                  propiedad.moneda || "USD"
+                                )}{" "}
+                                exp.
                               </span>
                             )}
                           </div>
 
                           <div className="flex items-center text-xs text-gray-500">
                             <CalendarIcon className="h-4 w-4 mr-1" />
-                            Publicado: {formatDate(propiedad.fechaPublicacionUtc)}
+                            Publicado:{" "}
+                            {formatDate(propiedad.fechaPublicacionUtc)}
                           </div>
                         </div>
 
@@ -505,7 +554,9 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
                       </div>
 
                       {propiedad.descripcion ? (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{propiedad.descripcion}</p>
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          {propiedad.descripcion}
+                        </p>
                       ) : null}
 
                       <div className="flex flex-wrap gap-2">
@@ -535,7 +586,9 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
             <div className="text-center py-8">
               <HomeIcon className="h-12 w-12 mx-auto text-gray-400" />
               <p className="mt-2 text-sm text-gray-500">
-                {loading ? "Cargando propiedades..." : "No hay propiedades disponibles con los filtros seleccionados"}
+                {loading
+                  ? "Cargando propiedades..."
+                  : "No hay propiedades disponibles con los filtros seleccionados"}
               </p>
               {!loading && (
                 <button
@@ -581,9 +634,14 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
                   </span>{" "}
                   -{" "}
                   <span className="font-medium">
-                    {Math.min(paginacion.currentPage * paginacion.pageSize, paginacion.totalCount)}
+                    {Math.min(
+                      paginacion.currentPage * paginacion.pageSize,
+                      paginacion.totalCount
+                    )}
                   </span>{" "}
-                  de <span className="font-medium">{paginacion.totalCount}</span> resultados
+                  de{" "}
+                  <span className="font-medium">{paginacion.totalCount}</span>{" "}
+                  resultados
                 </p>
               </div>
 
@@ -598,22 +656,26 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
                     <ChevronLeftIcon className="h-5 w-5" />
                   </button>
 
-                  {[...Array(Math.min(5, paginacion.totalPages))].map((_, i) => {
-                    const pageNumber = i + 1;
-                    const isActive = pageNumber === paginacion.currentPage;
-                    return (
-                      <button
-                        key={pageNumber}
-                        onClick={() => handlePageChange(pageNumber)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          isActive ? "z-10 bg-blue-50 border-blue-500 text-blue-600" : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                        }`}
-                        type="button"
-                      >
-                        {pageNumber}
-                      </button>
-                    );
-                  })}
+                  {[...Array(Math.min(5, paginacion.totalPages))].map(
+                    (_, i) => {
+                      const pageNumber = i + 1;
+                      const isActive = pageNumber === paginacion.currentPage;
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => handlePageChange(pageNumber)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            isActive
+                              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                              : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                          }`}
+                          type="button"
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    }
+                  )}
 
                   <button
                     onClick={() => handlePageChange(paginacion.currentPage + 1)}
