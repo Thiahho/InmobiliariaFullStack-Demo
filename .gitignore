@@ -58,6 +58,7 @@ LandingBack/wwwroot/uploads/
 # appsettings con secretos (solo para desarrollo)
 # Nota: appsettings.Production.json SÍ debe ir al repo (vacío)
 **/appsettings.Development.json
+**/appsettings.Render.json
 # NO ignorar appsettings.json para que esté en el repo como template
 
 # Database
