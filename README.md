@@ -1,5 +1,5 @@
 🔹 README – Sistema Inmobiliario Full Stack
-1. Nombre del Proyecto
+1. Sistema Inmobiliario Full Stack
 
 Sistema Inmobiliario Full Stack – Gestión de Propiedades y Visitas
 
