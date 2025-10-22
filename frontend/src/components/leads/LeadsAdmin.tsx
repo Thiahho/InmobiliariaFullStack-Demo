@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useAuthStore } from '../../store/authStore';
-import { axiosClient } from '../../lib/axiosClient';
-import { toast } from 'react-hot-toast';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import React, { useState, useEffect } from "react";
+import { useAuthStore } from "../../store/authStore";
+import { axiosClient } from "../../lib/axiosClient";
+import { toast } from "react-hot-toast";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -21,10 +21,10 @@ import {
   MapPinIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-} from '@heroicons/react/24/outline';
-import LeadDetailModal from './LeadDetailModal';
-import LeadAssignModal from './LeadAssignModal';
-import LeadStatusModal from './LeadStatusModal';
+} from "@heroicons/react/24/outline";
+import LeadDetailModal from "./LeadDetailModal";
+import LeadAssignModal from "./LeadAssignModal";
+import LeadStatusModal from "./LeadStatusModal";
 
 interface Lead {
   id: number;
@@ -62,17 +62,25 @@ interface Agente {
 }
 
 const ESTADOS_LEAD = [
-  { value: 'Nuevo', label: 'Nuevo', color: 'bg-blue-100 text-blue-800' },
-  { value: 'EnProceso', label: 'En Proceso', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'NoContesta', label: 'No Contesta', color: 'bg-gray-100 text-gray-800' },
-  { value: 'Cerrado', label: 'Cerrado', color: 'bg-green-100 text-green-800' },
+  { value: "Nuevo", label: "Nuevo", color: "bg-blue-100 text-blue-800" },
+  {
+    value: "EnProceso",
+    label: "En Proceso",
+    color: "bg-yellow-100 text-yellow-800",
+  },
+  {
+    value: "NoContesta",
+    label: "No Contesta",
+    color: "bg-gray-100 text-gray-800",
+  },
+  { value: "Cerrado", label: "Cerrado", color: "bg-green-100 text-green-800" },
 ];
 
 const TIPOS_CONSULTA = [
-  { value: 'Consulta', label: 'Consulta General' },
-  { value: 'Visita', label: 'Solicitud de Visita' },
-  { value: 'Informacion', label: 'Información' },
-  { value: 'Otro', label: 'Otro' },
+  { value: "Consulta", label: "Consulta General" },
+  { value: "Visita", label: "Solicitud de Visita" },
+  { value: "Informacion", label: "Información" },
+  { value: "Otro", label: "Otro" },
 ];
 
 export default function LeadsAdmin() {
@@ -103,15 +111,17 @@ export default function LeadsAdmin() {
       setLoading(true);
       const params = new URLSearchParams();
 
-      if (filters.estado) params.append('estado', filters.estado);
-      if (filters.tipoConsulta) params.append('tipoConsulta', filters.tipoConsulta);
-      if (filters.agenteAsignadoId) params.append('agenteAsignadoId', filters.agenteAsignadoId.toString());
-      if (filters.fechaDesde) params.append('fechaDesde', filters.fechaDesde);
-      if (filters.fechaHasta) params.append('fechaHasta', filters.fechaHasta);
+      if (filters.estado) params.append("estado", filters.estado);
+      if (filters.tipoConsulta)
+        params.append("tipoConsulta", filters.tipoConsulta);
+      if (filters.agenteAsignadoId)
+        params.append("agenteAsignadoId", filters.agenteAsignadoId.toString());
+      if (filters.fechaDesde) params.append("fechaDesde", filters.fechaDesde);
+      if (filters.fechaHasta) params.append("fechaHasta", filters.fechaHasta);
 
-      params.append('page', currentPage.toString());
-      params.append('pageSize', pageSize.toString());
-      params.append('orderDesc', 'true');
+      params.append("page", currentPage.toString());
+      params.append("pageSize", pageSize.toString());
+      params.append("orderDesc", "true");
 
       const response = await axiosClient.get(`/lead?${params.toString()}`);
 
@@ -119,8 +129,8 @@ export default function LeadsAdmin() {
       setTotalCount(response.data.totalCount || 0);
       setTotalPages(response.data.totalPaginas || 1);
     } catch (error) {
-      console.error('Error fetching leads:', error);
-      toast.error('Error al cargar los leads');
+      console.error("Error fetching leads:", error);
+      toast.error("Error al cargar los leads");
     } finally {
       setLoading(false);
     }
@@ -128,52 +138,66 @@ export default function LeadsAdmin() {
 
   const fetchAgentes = async () => {
     try {
-      const response = await axiosClient.get('/usuarios/agentes');
+      const response = await axiosClient.get("/usuarios/agentes");
       setAgentes(response.data || []);
     } catch (error) {
-      console.error('Error fetching agentes:', error);
+      console.error("Error fetching agentes:", error);
     }
   };
 
-  const handleAssignLead = async (leadId: number, agenteId: number, notas?: string) => {
+  const handleAssignLead = async (
+    leadId: number,
+    agenteId: number,
+    notas?: string
+  ) => {
     try {
-      await axiosClient.post('/lead/assign', {
+      await axiosClient.post("/lead/assign", {
         leadId,
         agenteId,
-        notas
+        notas,
       });
-      toast.success('Lead asignado correctamente');
+      toast.success("Lead asignado correctamente");
       setShowAssignModal(false);
       fetchLeads();
     } catch (error) {
-      console.error('Error assigning lead:', error);
-      toast.error('Error al asignar el lead');
+      console.error("Error assigning lead:", error);
+      toast.error("Error al asignar el lead");
     }
   };
 
-  const handleUpdateStatus = async (leadId: number, estado: string, notasInternas?: string) => {
+  const handleUpdateStatus = async (
+    leadId: number,
+    estado: string,
+    notasInternas?: string
+  ) => {
     try {
-      await axiosClient.put('/lead/status', {
+      await axiosClient.put("/lead/status", {
         leadId,
         estado,
-        notasInternas
+        notasInternas,
       });
-      toast.success('Estado actualizado correctamente');
+      toast.success("Estado actualizado correctamente");
       setShowStatusModal(false);
       fetchLeads();
     } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('Error al actualizar el estado');
+      console.error("Error updating status:", error);
+      toast.error("Error al actualizar el estado");
     }
   };
 
   const getEstadoBadge = (estado: string) => {
-    const estadoConfig = ESTADOS_LEAD.find(e => e.value === estado);
-    return estadoConfig || { value: estado, label: estado, color: 'bg-gray-100 text-gray-800' };
+    const estadoConfig = ESTADOS_LEAD.find((e) => e.value === estado);
+    return (
+      estadoConfig || {
+        value: estado,
+        label: estado,
+        color: "bg-gray-100 text-gray-800",
+      }
+    );
   };
 
   const handleFilterChange = (key: keyof LeadFilters, value: any) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
 
@@ -182,7 +206,7 @@ export default function LeadsAdmin() {
     setCurrentPage(1);
   };
 
-  const filteredLeads = leads.filter(lead => {
+  const filteredLeads = leads.filter((lead) => {
     if (!filters.search) return true;
     const search = filters.search.toLowerCase();
     return (
@@ -207,11 +231,14 @@ export default function LeadsAdmin() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Gestión de Leads</h1>
-          <p className="text-gray-600">Administra y da seguimiento a los leads generados</p>
+          <p className="text-gray-600">
+            Administra y da seguimiento a los leads generados
+          </p>
         </div>
         <div className="flex items-center space-x-3">
           <span className="text-sm text-gray-500">
-            {totalCount} lead{totalCount !== 1 ? 's' : ''} total{totalCount !== 1 ? 'es' : ''}
+            {totalCount} lead{totalCount !== 1 ? "s" : ""} total
+            {totalCount !== 1 ? "es" : ""}
           </span>
         </div>
       </div>
@@ -226,8 +253,8 @@ export default function LeadsAdmin() {
                 type="text"
                 placeholder="Buscar por nombre, email, teléfono o código de propiedad..."
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                value={filters.search || ''}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
+                value={filters.search || ""}
+                onChange={(e) => handleFilterChange("search", e.target.value)}
               />
             </div>
           </div>
@@ -247,44 +274,63 @@ export default function LeadsAdmin() {
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Estado
+                </label>
                 <select
-                  value={filters.estado || ''}
-                  onChange={(e) => handleFilterChange('estado', e.target.value)}
+                  value={filters.estado || ""}
+                  onChange={(e) => handleFilterChange("estado", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Todos los estados</option>
-                  {ESTADOS_LEAD.map(estado => (
-                    <option key={estado.value} value={estado.value}>{estado.label}</option>
+                  {ESTADOS_LEAD.map((estado) => (
+                    <option key={estado.value} value={estado.value}>
+                      {estado.label}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Consulta</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo de Consulta
+                </label>
                 <select
-                  value={filters.tipoConsulta || ''}
-                  onChange={(e) => handleFilterChange('tipoConsulta', e.target.value)}
+                  value={filters.tipoConsulta || ""}
+                  onChange={(e) =>
+                    handleFilterChange("tipoConsulta", e.target.value)
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Todos los tipos</option>
-                  {TIPOS_CONSULTA.map(tipo => (
-                    <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
+                  {TIPOS_CONSULTA.map((tipo) => (
+                    <option key={tipo.value} value={tipo.value}>
+                      {tipo.label}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Agente Asignado</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Agente Asignado
+                </label>
                 <select
-                  value={filters.agenteAsignadoId || ''}
-                  onChange={(e) => handleFilterChange('agenteAsignadoId', e.target.value ? parseInt(e.target.value) : undefined)}
+                  value={filters.agenteAsignadoId || ""}
+                  onChange={(e) =>
+                    handleFilterChange(
+                      "agenteAsignadoId",
+                      e.target.value ? parseInt(e.target.value) : undefined
+                    )
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Todos los agentes</option>
                   <option value="0">Sin asignar</option>
-                  {agentes.map(agente => (
-                    <option key={agente.id} value={agente.id}>{agente.nombre}</option>
+                  {agentes.map((agente) => (
+                    <option key={agente.id} value={agente.id}>
+                      {agente.nombre}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -334,7 +380,10 @@ export default function LeadsAdmin() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     No se encontraron leads con los criterios seleccionados
                   </td>
                 </tr>
@@ -345,7 +394,9 @@ export default function LeadsAdmin() {
                     <tr key={lead.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{lead.nombre}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {lead.nombre}
+                          </div>
                           <div className="text-sm text-gray-500 flex items-center">
                             <EnvelopeIcon className="h-3 w-3 mr-1" />
                             {lead.email}
@@ -360,7 +411,9 @@ export default function LeadsAdmin() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{lead.propiedadCodigo}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {lead.propiedadCodigo}
+                          </div>
                           <div className="text-sm text-gray-500 flex items-center">
                             <MapPinIcon className="h-3 w-3 mr-1" />
                             {lead.propiedadDireccion}
@@ -368,26 +421,36 @@ export default function LeadsAdmin() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">{lead.tipoConsulta}</span>
+                        <span className="text-sm text-gray-900">
+                          {lead.tipoConsulta}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${estadoBadge.color}`}>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${estadoBadge.color}`}
+                        >
                           {estadoBadge.label}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {lead.agenteAsignadoNombre ? (
-                          <span className="text-sm text-gray-900">{lead.agenteAsignadoNombre}</span>
+                          <span className="text-sm text-gray-900">
+                            {lead.agenteAsignadoNombre}
+                          </span>
                         ) : (
-                          <span className="text-sm text-gray-400">Sin asignar</span>
+                          <span className="text-sm text-gray-400">
+                            Sin asignar
+                          </span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {format(new Date(lead.fechaCreacion), 'dd/MM/yyyy', { locale: es })}
+                          {format(new Date(lead.fechaCreacion), "dd/MM/yyyy", {
+                            locale: es,
+                          })}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {format(new Date(lead.fechaCreacion), 'HH:mm')}
+                          {format(new Date(lead.fechaCreacion), "HH:mm")}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -441,14 +504,16 @@ export default function LeadsAdmin() {
           <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
             <div className="flex-1 flex justify-between sm:hidden">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
               >
                 Anterior
               </button>
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
                 disabled={currentPage === totalPages}
                 className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
               >
@@ -458,21 +523,24 @@ export default function LeadsAdmin() {
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-700">
-                  Mostrando{' '}
-                  <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span>
-                  {' '}a{' '}
+                  Mostrando{" "}
+                  <span className="font-medium">
+                    {(currentPage - 1) * pageSize + 1}
+                  </span>{" "}
+                  a{" "}
                   <span className="font-medium">
                     {Math.min(currentPage * pageSize, totalCount)}
-                  </span>
-                  {' '}de{' '}
-                  <span className="font-medium">{totalCount}</span>
-                  {' '}resultados
+                  </span>{" "}
+                  de <span className="font-medium">{totalCount}</span>{" "}
+                  resultados
                 </p>
               </div>
               <div>
                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                     disabled={currentPage === 1}
                     className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
@@ -481,15 +549,18 @@ export default function LeadsAdmin() {
 
                   {/* Números de página */}
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const pageNum = Math.max(1, Math.min(currentPage - 2 + i, totalPages - 4 + i));
+                    const pageNum = Math.max(
+                      1,
+                      Math.min(currentPage - 2 + i, totalPages - 4 + i)
+                    );
                     return pageNum <= totalPages ? (
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
                         className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                           currentPage === pageNum
-                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                            ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                            : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
                         }`}
                       >
                         {pageNum}
@@ -498,7 +569,9 @@ export default function LeadsAdmin() {
                   })}
 
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
                     disabled={currentPage === totalPages}
                     className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
@@ -512,26 +585,30 @@ export default function LeadsAdmin() {
       </div>
 
       {/* Modales */}
-      <LeadDetailModal
-        lead={selectedLead}
-        isOpen={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
-      />
-
-      <LeadAssignModal
-        lead={selectedLead}
-        agentes={agentes}
-        isOpen={showAssignModal}
-        onClose={() => setShowAssignModal(false)}
-        onAssign={handleAssignLead}
-      />
-
-      <LeadStatusModal
-        lead={selectedLead}
-        isOpen={showStatusModal}
-        onClose={() => setShowStatusModal(false)}
-        onUpdateStatus={handleUpdateStatus}
-      />
+      {selectedLead && (
+        <LeadDetailModal
+          lead={selectedLead}
+          isOpen={showDetailModal}
+          onClose={() => setShowDetailModal(false)}
+        />
+      )}
+      {selectedLead && (
+        <LeadAssignModal
+          lead={selectedLead}
+          agentes={agentes}
+          isOpen={showAssignModal}
+          onClose={() => setShowAssignModal(false)}
+          onAssign={handleAssignLead}
+        />
+      )}
+      {selectedLead && (
+        <LeadStatusModal
+          lead={selectedLead}
+          isOpen={showStatusModal}
+          onClose={() => setShowStatusModal(false)}
+          onUpdateStatus={handleUpdateStatus}
+        />
+      )}
     </div>
   );
 }
