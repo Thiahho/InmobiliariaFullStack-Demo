@@ -41,6 +41,14 @@ builder.Services.AddCors(options =>
         var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
             ?? new[] { "http://localhost:3000" }; // Fallback si no hay configuración
 
+        // Log para debugging en producción
+        Console.WriteLine($"🌐 CORS Configuration:");
+        Console.WriteLine($"   Allowed Origins Count: {allowedOrigins.Length}");
+        foreach (var origin in allowedOrigins)
+        {
+            Console.WriteLine($"   - {origin}");
+        }
+
         corsBuilder
             .WithOrigins(allowedOrigins)
             .AllowAnyMethod()
