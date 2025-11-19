@@ -7,6 +7,11 @@ const baseURL =
   process.env.NEXT_PUBLIC_API_URL ||
   "http://localhost:5174/api";
 
+// Debug: Log para verificar qué URL se está usando
+console.log("🔧 axiosPublic baseURL:", baseURL);
+console.log("🔧 process.env.NEXT_PUBLIC_API_URL:", process.env.NEXT_PUBLIC_API_URL);
+console.log("🔧 import.meta available:", typeof import.meta !== "undefined");
+
 // Cliente HTTP público (sin autenticación)
 export const axiosPublic = axios.create({
   baseURL,
