@@ -197,8 +197,12 @@ namespace LandingBack.Services
         {
             try
             {
+                _logger.LogInformation("🔍 SERVICE: Iniciando GetPropiedadesPaginadasAsync - Página: {Pagina}, Tamaño: {TamanoPagina}", pagina, tamanoPagina);
+
                 if (pagina < 1) pagina = 1;
                 if (tamanoPagina < 1) tamanoPagina = 10;
+
+                _logger.LogInformation("🔍 SERVICE: Consultando base de datos...");
 
                 var propiedades = await _appDbContext.Propiedades
                     .Include(p => p.Medias)
@@ -209,10 +213,18 @@ namespace LandingBack.Services
                     .AsNoTracking()
                     .ToListAsync();
 
-                return _mapper.Map<List<PropiedadResponseDto>>(propiedades);
+                _logger.LogInformation("✅ SERVICE: Propiedades obtenidas de DB: {Count}", propiedades.Count);
+                _logger.LogInformation("🔄 SERVICE: Mapeando a DTOs...");
+
+                var result = _mapper.Map<List<PropiedadResponseDto>>(propiedades);
+
+                _logger.LogInformation("✅ SERVICE: Mapeo completado: {Count} items", result.Count);
+
+                return result;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "❌ SERVICE ERROR: {Message}, Inner: {InnerMessage}", ex.Message, ex.InnerException?.Message);
                 throw new InvalidOperationException($"Error al obtener propiedades paginadas: {ex.Message}", ex);
             }
         }

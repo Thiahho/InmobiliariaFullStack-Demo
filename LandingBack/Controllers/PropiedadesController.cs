@@ -62,13 +62,19 @@ namespace LandingBack.Controllers
         [HttpGet("paginadas")]
         public async Task<ActionResult<object>> GetPropiedadesPaginadas(
             [FromQuery] int pagina = 1,
-            [FromQuery] int tamanoPagina = 20)
+            [FromQuery] int tamanoPagina = 20,
+            [FromQuery] string? estado = null)
         {
             try
             {
+                _logger.LogInformation("📋 Solicitando propiedades paginadas - Página: {Pagina}, Tamaño: {TamanoPagina}, Estado: {Estado}", pagina, tamanoPagina, estado ?? "null");
+
                 var propiedades = await _propiedadesService.GetPropiedadesPaginadasAsync(pagina, tamanoPagina);
+                _logger.LogInformation("✅ Propiedades obtenidas: {Count}", propiedades?.Count() ?? 0);
+
                 var totalCount = await _propiedadesService.GetTotalPropiedadesCountAsync();
-                
+                _logger.LogInformation("✅ Total de propiedades: {TotalCount}", totalCount);
+
                 return Ok(new
                 {
                     Data = propiedades,
@@ -80,8 +86,8 @@ namespace LandingBack.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener propiedades paginadas");
-                return StatusCode(500, "Error interno del servidor");
+                _logger.LogError(ex, "❌ ERROR al obtener propiedades paginadas - Mensaje: {Message}, StackTrace: {StackTrace}", ex.Message, ex.StackTrace);
+                return StatusCode(500, new { error = "Error interno del servidor", details = ex.Message, innerException = ex.InnerException?.Message });
             }
         }
 
