@@ -19,7 +19,10 @@ import {
 type ID = string | number;
 
 type Media = {
+  id?: number;
   url: string;
+  tipo?: string;
+  tipoArchivo?: string;
   esPrincipal?: boolean;
 };
 
