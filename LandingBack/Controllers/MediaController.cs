@@ -57,6 +57,35 @@ namespace LandingBack.Controllers
             }
         }
 
+        // GET: api/media/{id}/image - Endpoint para servir la imagen binaria
+        [HttpGet("{id}/image")]
+        public async Task<IActionResult> GetMediaImage(int id)
+        {
+            try
+            {
+                var result = await _mediaService.GetMediaBinaryDataAsync(id);
+
+                if (result == null)
+                {
+                    _logger.LogWarning("No se encontró imagen para media {Id}", id);
+                    return NotFound("Imagen no encontrada");
+                }
+
+                var (data, contentType, fileName) = result.Value;
+
+                // Retornar la imagen con cache headers para mejorar rendimiento
+                Response.Headers.Add("Cache-Control", "public, max-age=31536000"); // Cache por 1 año
+                Response.Headers.Add("ETag", $"\"{id}\"");
+
+                return File(data, contentType, fileName, enableRangeProcessing: true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener imagen de media {Id}", id);
+                return StatusCode(500, "Error interno del servidor");
+            }
+        }
+
         // POST: api/media/upload/{propiedadId}
         [HttpPost("upload/{propiedadId}")]
         [Authorize(Roles = "Admin,Agente,Cargador")]

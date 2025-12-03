@@ -144,11 +144,22 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
       : "";
 
   const getMediaUrl = (media: Media) => {
-    if (media.url.startsWith("http")) return media.url;
+    // Si la URL es externa (YouTube, Google Drive, etc.), usar directamente
+    if (media.url.startsWith("http://") || media.url.startsWith("https://")) {
+      return media.url;
+    }
+
     const base =
       (import.meta as any)?.env?.VITE_API_BASE_URL ||
       process.env.NEXT_PUBLIC_API_BASE_URL ||
       "http://localhost:5174";
+
+    // Si la media tiene ID y es una imagen almacenada en la BD, usar el endpoint /api/media/{id}/image
+    if (media.id && (media.tipo === "image" || media.tipoArchivo?.match(/^(jpg|jpeg|png|gif|webp|bmp)$/i))) {
+      return `${base}/api/media/${media.id}/image`;
+    }
+
+    // Fallback a la URL relativa (por compatibilidad)
     return `${base}${media.url}`;
   };
 

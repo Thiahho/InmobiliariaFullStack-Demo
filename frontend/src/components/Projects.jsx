@@ -42,12 +42,10 @@ const Projects = () => {
         // Extraer el array de propiedades del resultado
         const data = result.data || result.Data || [];
 
-        console.log("🏠 Propiedades destacadas cargadas:", data.length);
         setProjectsData(data);
         setError(null);
       } catch (err) {
         setError(err.message);
-        console.error("Error fetching featured projects:", err);
         // Fallback: intentar con el endpoint simple y filtrar localmente
         try {
           const response = await fetch("http://localhost:5174/api/propiedades");
@@ -58,13 +56,9 @@ const Projects = () => {
             );
             setProjectsData(featuredData);
             setError(null);
-            console.log(
-              "🏠 Fallback: Propiedades destacadas filtradas localmente:",
-              featuredData.length
-            );
           }
         } catch (fallbackErr) {
-          console.error("Error en fallback:", fallbackErr);
+          // Error en fallback, mantener el error original
         }
       } finally {
         setLoading(false);
@@ -210,12 +204,21 @@ const Projects = () => {
                   <img
                     src={(() => {
                       if (project.medias && project.medias.length > 0) {
-                        const mediaUrl =
-                          project.medias.find((media) => media.esPrincipal)
-                            ?.url || project.medias[0]?.url;
-                        return mediaUrl.startsWith("http")
-                          ? mediaUrl
-                          : `http://localhost:5174${mediaUrl}`;
+                        // Buscar la imagen principal o la primera disponible
+                        const media = project.medias.find((m) => m.esPrincipal) || project.medias[0];
+
+                        // Si la URL es externa (YouTube, Google Drive, etc.), usar directamente
+                        if (media.url.startsWith("http://") || media.url.startsWith("https://")) {
+                          return media.url;
+                        }
+
+                        // Si es una imagen almacenada en la BD, usar el endpoint /api/media/{id}/image
+                        if (media.id) {
+                          return `http://localhost:5174/api/media/${media.id}/image`;
+                        }
+
+                        // Fallback a la URL relativa (por compatibilidad)
+                        return `http://localhost:5174${media.url}`;
                       }
                       return "/image.png";
                     })()}

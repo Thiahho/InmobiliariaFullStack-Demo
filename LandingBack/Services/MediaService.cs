@@ -69,6 +69,26 @@ namespace LandingBack.Services
             }
         }
 
+        public async Task<(byte[] Data, string ContentType, string FileName)?> GetMediaBinaryDataAsync(int id)
+        {
+            try
+            {
+                var media = await _context.PropiedadMedias
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(m => m.Id == id);
+
+                if (media == null || media.DatosArchivo == null)
+                    return null;
+
+                return (media.DatosArchivo, media.ContentType ?? "image/webp", media.NombreArchivo ?? $"image_{id}.webp");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener datos binarios de media {Id}", id);
+                return null;
+            }
+        }
+
         public async Task<PropiedadMediaDto> CreateMediaAsync(int propiedadId, MediaCreateDto mediaCreateDto)
         {
             try
@@ -92,13 +112,19 @@ namespace LandingBack.Services
                     orden = maxOrden + 1;
                 }
 
+                // Verificar si ya existe una imagen principal
+                var tienePrincipal = await _context.PropiedadMedias
+                    .AnyAsync(m => m.PropiedadId == propiedadId && m.EsPrincipal);
+
                 var media = new PropiedadMedia
                 {
                     PropiedadId = propiedadId,
                     Url = urlProcessed,
                     Titulo = mediaCreateDto.Titulo ?? GenerateDefaultTitle(mediaCreateDto.Url, tipoDetectado),
                     Tipo = string.IsNullOrEmpty(mediaCreateDto.Tipo) ? tipoDetectado : mediaCreateDto.Tipo,
-                    Orden = orden
+                    TipoArchivo = DetectFileType(tipoDetectado),
+                    Orden = orden,
+                    EsPrincipal = !tienePrincipal // La primera media será principal
                 };
 
                 _context.PropiedadMedias.Add(media);
@@ -179,33 +205,38 @@ namespace LandingBack.Services
                 if (!propiedadExists)
                     throw new ArgumentException($"No existe propiedad con ID: {propiedadId}");
 
-                string filePath;
+                byte[] datosArchivo;
                 string tipoArchivo = "image";
+                string contentType = file.ContentType;
+                string tipoArchivoExt = "webp";
 
                 // Verificar si es imagen para convertir a WebP
                 if (_imageProcessing.IsImageFile(file))
                 {
-                    // Convertir imagen a WebP optimizada
-                    var optimizedBytes = await _imageProcessing.ResizeAndConvertAsync(
-                        file, 
-                        maxWidth: 1920, 
-                        maxHeight: 1080, 
+                    // Convertir imagen a WebP optimizada y guardar en base de datos
+                    datosArchivo = await _imageProcessing.ResizeAndConvertAsync(
+                        file,
+                        maxWidth: 1920,
+                        maxHeight: 1080,
                         quality: 85
                     );
 
-                    // Guardar imagen optimizada
-                    filePath = await SaveOptimizedImageAsync(optimizedBytes, file.FileName, "properties");
                     tipoArchivo = "image";
-                    
-                    _logger.LogInformation("Imagen convertida a WebP: {FileName} -> {FilePath}", file.FileName, filePath);
+                    contentType = "image/webp";
+                    tipoArchivoExt = "webp";
                 }
                 else
                 {
-                    // Para videos y otros archivos, guardar normalmente
-                    filePath = await SaveFileAsync(file, "properties");
-                    
+                    // Para videos y otros archivos, leer bytes directamente
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await file.CopyToAsync(memoryStream);
+                        datosArchivo = memoryStream.ToArray();
+                    }
+
                     var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
                     tipoArchivo = _allowedVideoTypes.Contains(extension) ? "video" : "file";
+                    tipoArchivoExt = extension.TrimStart('.');
                 }
 
                 // Obtener próximo orden
@@ -213,17 +244,30 @@ namespace LandingBack.Services
                     .Where(m => m.PropiedadId == propiedadId)
                     .MaxAsync(m => (int?)m.Orden) ?? 0;
 
+                // Verificar si ya existe una imagen principal
+                var tienePrincipal = await _context.PropiedadMedias
+                    .AnyAsync(m => m.PropiedadId == propiedadId && m.EsPrincipal);
+
                 var media = new PropiedadMedia
                 {
                     PropiedadId = propiedadId,
-                    Url = filePath,
+                    Url = $"/api/media/{propiedadId}/image", // URL temporal, se actualizará con el ID real
+                    DatosArchivo = datosArchivo,
+                    NombreArchivo = file.FileName,
+                    ContentType = contentType,
+                    TamanoBytes = datosArchivo.Length,
                     Titulo = titulo ?? Path.GetFileNameWithoutExtension(file.FileName),
                     Tipo = tipoArchivo,
-                    TipoArchivo = tipoArchivo == "image" ? "webp" : Path.GetExtension(file.FileName).TrimStart('.'),
-                    Orden = maxOrden + 1
+                    TipoArchivo = tipoArchivoExt,
+                    Orden = maxOrden + 1,
+                    EsPrincipal = !tienePrincipal // La primera imagen será principal
                 };
 
                 _context.PropiedadMedias.Add(media);
+                await _context.SaveChangesAsync();
+
+                // Actualizar URL con el ID correcto
+                media.Url = $"/api/media/{media.Id}/image";
                 await _context.SaveChangesAsync();
 
                 return _mapper.Map<PropiedadMediaDto>(media);
@@ -463,7 +507,7 @@ namespace LandingBack.Services
             {
                 if (IsYouTubeUrl(url))
                     return "Video de YouTube";
-                
+
                 if (IsGoogleDriveUrl(url))
                     return $"Archivo de Google Drive ({tipo})";
 
@@ -485,6 +529,17 @@ namespace LandingBack.Services
             {
                 return $"Media {tipo}";
             }
+        }
+
+        private string DetectFileType(string tipo)
+        {
+            return tipo switch
+            {
+                "image" => "jpg",
+                "video" => "mp4",
+                "tour" => "html",
+                _ => "file"
+            };
         }
 
         #endregion

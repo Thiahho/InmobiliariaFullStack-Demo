@@ -368,15 +368,8 @@ namespace LandingBack.Services
                     .AsNoTracking()
                     .ToListAsync();
 
-                _logger.LogInformation("📄 SERVICE: Propiedades obtenidas: {Count}", propiedades.Count);
-                
                 var propiedadesDto = _mapper.Map<List<PropiedadResponseDto>>(propiedades);
-                _logger.LogInformation("🏠 SERVICE: Propiedades mapeadas a DTO: {Count}", propiedadesDto.Count);
-                
-                // Log algunos códigos de ejemplo
-                var ejemplosCodigos = propiedadesDto.Take(3).Select(p => p.Codigo).ToList();
-                _logger.LogInformation("🏷️ SERVICE: Ejemplos de códigos encontrados: {Codigos}", string.Join(", ", ejemplosCodigos));
-                
+
                 return (propiedadesDto, totalCount);
             }
             catch (Exception ex)

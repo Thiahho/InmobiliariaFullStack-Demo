@@ -6,6 +6,7 @@ namespace LandingBack.Services.Interfaces
     {
         Task<IEnumerable<PropiedadMediaDto>> GetMediaByPropiedadIdAsync(int propiedadId);
         Task<PropiedadMediaDto> GetMediaByIdAsync(int id);
+        Task<(byte[] Data, string ContentType, string FileName)?> GetMediaBinaryDataAsync(int id);
         Task<PropiedadMediaDto> CreateMediaAsync(int propiedadId, MediaCreateDto mediaCreateDto);
         Task<PropiedadMediaDto> UpdateMediaAsync(int id, MediaUpdateDto mediaUpdateDto);
         Task DeleteMediaAsync(int id);
