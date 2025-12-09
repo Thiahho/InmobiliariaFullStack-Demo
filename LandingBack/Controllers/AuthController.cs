@@ -21,7 +21,7 @@ namespace LandingBack.Controllers
         }
 
         [HttpPost("login")]
-        [EnableRateLimiting("LoginPolicy")]
+        // [EnableRateLimiting("LoginPolicy")] // Commented out until rate limiting is configured in Program.cs
         public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequest)
         {
             if (!ModelState.IsValid)
