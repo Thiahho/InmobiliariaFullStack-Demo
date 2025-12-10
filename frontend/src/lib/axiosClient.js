@@ -5,7 +5,7 @@ const baseURL =
     import.meta.env &&
     import.meta.env.VITE_API_URL) ||
   process.env.NEXT_PUBLIC_API_URL ||
-  "http://inmobiliaria-full-stack-demo.vercel.app/api";
+  "https://inmobiliariafullstack-demo.onrender.com/api";
 
 // Debug: Log para verificar qué URL se está usando
 console.log("🔧 axiosClient baseURL:", baseURL);

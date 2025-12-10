@@ -152,7 +152,7 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
     const base =
       (import.meta as any)?.env?.VITE_API_BASE_URL ||
       process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "http://inmobiliaria-full-stack-demo.vercel.app";
+      "https://inmobiliariafullstack-demo.onrender.com";
 
     // Si la media tiene ID y es una imagen almacenada en la BD, usar el endpoint /api/media/{id}/image
     if (

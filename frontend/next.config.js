@@ -4,7 +4,8 @@ const nextConfig = {
     domains: [
       "localhost",
       "drive.google.com",
-      "https://inmobiliariafullstack-demo.onrender.com",
+      "inmobiliariafullstack-demo.onrender.com",
+      "inmobiliaria-full-stack-demo.vercel.app",
       "docs.google.com",
       "img.youtube.com",
       "i.ytimg.com",
@@ -23,7 +24,7 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL:
       process.env.NEXT_PUBLIC_API_URL ||
-      "http://inmobiliaria-full-stack-demo.vercel.app/api",
+      "https://inmobiliariafullstack-demo.onrender.com/api",
     NEXT_PUBLIC_BASE_URL:
       process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
   },

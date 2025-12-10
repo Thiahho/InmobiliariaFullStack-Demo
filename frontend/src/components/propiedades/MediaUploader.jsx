@@ -170,11 +170,12 @@ const MediaUploader = ({ propiedadId }) => {
     if (media.url.startsWith("http")) {
       return media.url;
     }
-    // Para archivos locales, construir URL completa
-    return `${
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "http://inmobiliaria-full-stack-demo.vercel.app"
-    }${media.url}`;
+    // Para archivos locales del backend, usar la API URL
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://inmobiliariafullstack-demo.onrender.com/api";
+    // Remover /api del final si existe para construir la URL base del backend
+    const backendBaseUrl = apiUrl.replace(/\/api$/, '');
+
+    return `${backendBaseUrl}${media.url}`;
   };
 
   const sortedMedias = [...mediasPropiedad].sort((a, b) => a.orden - b.orden);

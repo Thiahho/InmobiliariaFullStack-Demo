@@ -17,9 +17,11 @@ const Projects = () => {
     const fetchProjects = async () => {
       try {
         setLoading(true);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://inmobiliariafullstack-demo.onrender.com/api";
+
         // Buscar solo propiedades destacadas usando búsqueda avanzada
         const response = await fetch(
-          "http://inmobiliaria-full-stack-demo.vercel.app/api/propiedades/buscar-avanzada",
+          `${apiUrl}/propiedades/buscar-avanzada`,
           {
             method: "POST",
             headers: {
@@ -48,8 +50,9 @@ const Projects = () => {
         setError(err.message);
         // Fallback: intentar con el endpoint simple y filtrar localmente
         try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://inmobiliariafullstack-demo.onrender.com/api";
           const response = await fetch(
-            "http://inmobiliaria-full-stack-demo.vercel.app/api/propiedades"
+            `${apiUrl}/propiedades`
           );
           if (response.ok) {
             const allData = await response.json();
@@ -219,13 +222,17 @@ const Projects = () => {
                           return media.url;
                         }
 
+                        // Usar la API URL del entorno
+                        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://inmobiliariafullstack-demo.onrender.com/api";
+                        const backendBaseUrl = apiUrl.replace(/\/api$/, '');
+
                         // Si es una imagen almacenada en la BD, usar el endpoint /api/media/{id}/image
                         if (media.id) {
-                          return `http://inmobiliaria-full-stack-demo.vercel.app/api/media/${media.id}/image`;
+                          return `${apiUrl}/media/${media.id}/image`;
                         }
 
                         // Fallback a la URL relativa (por compatibilidad)
-                        return `http://inmobiliaria-full-stack-demo.vercel.app${media.url}`;
+                        return `${backendBaseUrl}${media.url}`;
                       }
                       return "/image.png";
                     })()}
