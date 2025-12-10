@@ -23,6 +23,7 @@ namespace LandingBack.Controllers
 
         // GET: api/media/propiedad/{propiedadId}
         [HttpGet("propiedad/{propiedadId}")]
+        [AllowAnonymous] // Permitir acceso público para ver los medias de propiedades
         public async Task<ActionResult<IEnumerable<PropiedadMediaDto>>> GetMediaByPropiedad(int propiedadId)
         {
             try
@@ -39,6 +40,7 @@ namespace LandingBack.Controllers
 
         // GET: api/media/{id}
         [HttpGet("{id}")]
+        [AllowAnonymous] // Permitir acceso público a metadata de medias
         public async Task<ActionResult<PropiedadMediaDto>> GetMedia(int id)
         {
             try
@@ -59,6 +61,7 @@ namespace LandingBack.Controllers
 
         // GET: api/media/{id}/image - Endpoint para servir la imagen binaria
         [HttpGet("{id}/image")]
+        [AllowAnonymous] // Permitir acceso público a las imágenes
         public async Task<IActionResult> GetMediaImage(int id)
         {
             try

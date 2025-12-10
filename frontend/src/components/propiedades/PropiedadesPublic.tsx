@@ -438,6 +438,8 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
                                 return;
                               }
                             }
+                            // Log error para debug
+                            console.error("Error al cargar imagen:", el.src);
                             el.style.display = "none";
                             el.parentElement &&
                               ((el.parentElement as any).innerHTML = `
