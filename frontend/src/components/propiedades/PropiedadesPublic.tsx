@@ -260,17 +260,24 @@ const PropiedadesPublic: React.FC<Props> = ({ onView }) => {
     const principalMedia = medias.find((m) => m.esPrincipal) ?? medias[0];
 
     // Si la URL es externa (YouTube, Google Drive, etc.), usar directamente
-    if (principalMedia.url.startsWith("http://") || principalMedia.url.startsWith("https://")) {
+    if (
+      principalMedia.url.startsWith("http://") ||
+      principalMedia.url.startsWith("https://")
+    ) {
       return convertGoogleDriveUrl(principalMedia.url);
     }
 
     const base =
       (import.meta as any)?.env?.VITE_API_BASE_URL ||
       process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "http://localhost:5174";
+      "http://inmobiliaria-full-stack-demo.vercel.app";
 
     // Si la media tiene ID y es una imagen almacenada en la BD, usar el endpoint /api/media/{id}/image
-    if (principalMedia.id && (principalMedia.tipo === "image" || principalMedia.tipoArchivo?.match(/^(jpg|jpeg|png|gif|webp|bmp)$/i))) {
+    if (
+      principalMedia.id &&
+      (principalMedia.tipo === "image" ||
+        principalMedia.tipoArchivo?.match(/^(jpg|jpeg|png|gif|webp|bmp)$/i))
+    ) {
       return `${base}/api/media/${principalMedia.id}/image`;
     }
 

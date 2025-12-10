@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { usePropiedadesStore } from '../../store/propiedadesStore';
-import { toast } from 'react-hot-toast';
-import { 
-  PhotoIcon, 
+import React, { useState, useEffect, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
+import { usePropiedadesStore } from "../../store/propiedadesStore";
+import { toast } from "react-hot-toast";
+import {
+  PhotoIcon,
   VideoCameraIcon,
   TrashIcon,
   EyeIcon,
   CloudArrowUpIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 
 const MediaUploader = ({ propiedadId }) => {
   const {
@@ -19,7 +19,7 @@ const MediaUploader = ({ propiedadId }) => {
     bulkUploadMedia,
     deleteMedia,
     reorderMedia,
-    loading
+    loading,
   } = usePropiedadesStore();
 
   const [draggedItem, setDraggedItem] = useState(null);
@@ -32,79 +32,85 @@ const MediaUploader = ({ propiedadId }) => {
     }
   }, [propiedadId, fetchMediasByPropiedad]);
 
-  const onDrop = useCallback(async (acceptedFiles) => {
-    if (!propiedadId) {
-      toast.error('Primero debe guardar la propiedad');
-      return;
-    }
-
-    // Filtrar solo archivos de imagen y video
-    const validFiles = acceptedFiles.filter(file => {
-      const isValid = file.type.startsWith('image/') || file.type.startsWith('video/');
-      if (!isValid) {
-        toast.error(`${file.name} no es un archivo válido`);
+  const onDrop = useCallback(
+    async (acceptedFiles) => {
+      if (!propiedadId) {
+        toast.error("Primero debe guardar la propiedad");
+        return;
       }
-      return isValid;
-    });
 
-    if (validFiles.length === 0) return;
+      // Filtrar solo archivos de imagen y video
+      const validFiles = acceptedFiles.filter((file) => {
+        const isValid =
+          file.type.startsWith("image/") || file.type.startsWith("video/");
+        if (!isValid) {
+          toast.error(`${file.name} no es un archivo válido`);
+        }
+        return isValid;
+      });
 
-    try {
-      if (validFiles.length === 1) {
-        // Subida individual
-        setUploadProgress({ [validFiles[0].name]: 0 });
-        await uploadMedia(propiedadId, validFiles[0]);
-        setUploadProgress({});
-      } else {
-        // Subida múltiple
-        const progressInit = {};
-        validFiles.forEach(file => {
-          progressInit[file.name] = 0;
-        });
-        setUploadProgress(progressInit);
+      if (validFiles.length === 0) return;
 
-        await bulkUploadMedia(propiedadId, validFiles);
+      try {
+        if (validFiles.length === 1) {
+          // Subida individual
+          setUploadProgress({ [validFiles[0].name]: 0 });
+          await uploadMedia(propiedadId, validFiles[0]);
+          setUploadProgress({});
+        } else {
+          // Subida múltiple
+          const progressInit = {};
+          validFiles.forEach((file) => {
+            progressInit[file.name] = 0;
+          });
+          setUploadProgress(progressInit);
+
+          await bulkUploadMedia(propiedadId, validFiles);
+          setUploadProgress({});
+        }
+      } catch (error) {
+        console.error("Error al subir archivos:", error);
         setUploadProgress({});
       }
-    } catch (error) {
-      console.error('Error al subir archivos:', error);
-      setUploadProgress({});
-    }
-  }, [propiedadId, uploadMedia, bulkUploadMedia]);
+    },
+    [propiedadId, uploadMedia, bulkUploadMedia]
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.gif'],
-      'video/*': ['.mp4', '.avi', '.mov', '.wmv']
+      "image/*": [".jpeg", ".jpg", ".png", ".webp", ".gif"],
+      "video/*": [".mp4", ".avi", ".mov", ".wmv"],
     },
     multiple: true,
-    maxSize: 50 * 1024 * 1024 // 50MB
+    maxSize: 50 * 1024 * 1024, // 50MB
   });
 
   const handleDelete = async (mediaId) => {
-    if (window.confirm('¿Está seguro de que desea eliminar esta imagen/video?')) {
+    if (
+      window.confirm("¿Está seguro de que desea eliminar esta imagen/video?")
+    ) {
       try {
         await deleteMedia(mediaId);
       } catch (error) {
-        console.error('Error al eliminar media:', error);
+        console.error("Error al eliminar media:", error);
       }
     }
   };
 
   const handleDragStart = (e, media) => {
     setDraggedItem(media);
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    e.dataTransfer.dropEffect = "move";
   };
 
   const handleDrop = async (e, targetMedia) => {
     e.preventDefault();
-    
+
     if (!draggedItem || draggedItem.id === targetMedia.id) {
       setDraggedItem(null);
       return;
@@ -112,9 +118,15 @@ const MediaUploader = ({ propiedadId }) => {
 
     try {
       // Crear nuevo orden
-      const sortedMedias = [...mediasPropiedad].sort((a, b) => a.orden - b.orden);
-      const draggedIndex = sortedMedias.findIndex(m => m.id === draggedItem.id);
-      const targetIndex = sortedMedias.findIndex(m => m.id === targetMedia.id);
+      const sortedMedias = [...mediasPropiedad].sort(
+        (a, b) => a.orden - b.orden
+      );
+      const draggedIndex = sortedMedias.findIndex(
+        (m) => m.id === draggedItem.id
+      );
+      const targetIndex = sortedMedias.findIndex(
+        (m) => m.id === targetMedia.id
+      );
 
       if (draggedIndex === -1 || targetIndex === -1) return;
 
@@ -126,12 +138,12 @@ const MediaUploader = ({ propiedadId }) => {
       // Actualizar orden
       const ordenItems = newOrder.map((media, index) => ({
         id: media.id,
-        orden: index + 1
+        orden: index + 1,
       }));
 
       await reorderMedia(propiedadId, ordenItems);
     } catch (error) {
-      console.error('Error al reordenar:', error);
+      console.error("Error al reordenar:", error);
     }
 
     setDraggedItem(null);
@@ -142,19 +154,27 @@ const MediaUploader = ({ propiedadId }) => {
   };
 
   const isImage = (media) => {
-    return media.tipo === 'image' || media.tipoArchivo?.match(/^(jpg|jpeg|png|gif|webp|bmp)$/i);
+    return (
+      media.tipo === "image" ||
+      media.tipoArchivo?.match(/^(jpg|jpeg|png|gif|webp|bmp)$/i)
+    );
   };
 
   const isVideo = (media) => {
-    return media.tipo === 'video' || media.tipoArchivo?.match(/^(mp4|avi|mov|wmv)$/i);
+    return (
+      media.tipo === "video" || media.tipoArchivo?.match(/^(mp4|avi|mov|wmv)$/i)
+    );
   };
 
   const getMediaUrl = (media) => {
-    if (media.url.startsWith('http')) {
+    if (media.url.startsWith("http")) {
       return media.url;
     }
     // Para archivos locales, construir URL completa
-    return `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5174'}${media.url}`;
+    return `${
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "http://inmobiliaria-full-stack-demo.vercel.app"
+    }${media.url}`;
   };
 
   const sortedMedias = [...mediasPropiedad].sort((a, b) => a.orden - b.orden);
@@ -166,8 +186,8 @@ const MediaUploader = ({ propiedadId }) => {
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           isDragActive
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300 hover:border-gray-400"
         }`}
       >
         <input {...getInputProps()} />
@@ -175,11 +195,12 @@ const MediaUploader = ({ propiedadId }) => {
         <div className="mt-2">
           <p className="text-sm text-gray-600">
             {isDragActive
-              ? 'Suelta los archivos aquí...'
-              : 'Arrastra imágenes y videos aquí, o haz clic para seleccionar'}
+              ? "Suelta los archivos aquí..."
+              : "Arrastra imágenes y videos aquí, o haz clic para seleccionar"}
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            Formatos soportados: JPG, PNG, WebP, GIF, MP4, AVI, MOV, WMV (máx. 50MB)
+            Formatos soportados: JPG, PNG, WebP, GIF, MP4, AVI, MOV, WMV (máx.
+            50MB)
           </p>
         </div>
       </div>
@@ -212,9 +233,7 @@ const MediaUploader = ({ propiedadId }) => {
             <h4 className="font-medium text-gray-900">
               Imágenes y Videos ({sortedMedias.length})
             </h4>
-            <p className="text-sm text-gray-500">
-              Arrastra para reordenar
-            </p>
+            <p className="text-sm text-gray-500">Arrastra para reordenar</p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -227,8 +246,8 @@ const MediaUploader = ({ propiedadId }) => {
                 onDrop={(e) => handleDrop(e, media)}
                 className={`relative group bg-white rounded-lg shadow-sm border-2 transition-all cursor-move ${
                   draggedItem?.id === media.id
-                    ? 'border-blue-500 shadow-lg scale-105'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? "border-blue-500 shadow-lg scale-105"
+                    : "border-gray-200 hover:border-gray-300"
                 }`}
               >
                 {/* Thumbnail */}
@@ -236,11 +255,11 @@ const MediaUploader = ({ propiedadId }) => {
                   {isImage(media) ? (
                     <img
                       src={getMediaUrl(media)}
-                      alt={media.titulo || 'Imagen'}
+                      alt={media.titulo || "Imagen"}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        console.error('Error al cargar imagen:', e.target.src);
-                        e.target.style.display = 'none';
+                        console.error("Error al cargar imagen:", e.target.src);
+                        e.target.style.display = "none";
                         e.target.parentElement.innerHTML = `
                           <div class="w-full h-full flex items-center justify-center bg-gray-200">
                             <div class="text-center">
@@ -324,16 +343,19 @@ const MediaUploader = ({ propiedadId }) => {
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
-            
+
             <div className="p-4">
               {isImage(previewModal) ? (
                 <img
                   src={getMediaUrl(previewModal)}
-                  alt={previewModal.titulo || 'Preview'}
+                  alt={previewModal.titulo || "Preview"}
                   className="max-w-full max-h-96 object-contain mx-auto"
                   onError={(e) => {
-                    console.error('Error al cargar imagen en preview:', e.target.src);
-                    e.target.style.display = 'none';
+                    console.error(
+                      "Error al cargar imagen en preview:",
+                      e.target.src
+                    );
+                    e.target.style.display = "none";
                     e.target.parentElement.innerHTML = `
                       <div class="text-center py-8">
                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -356,7 +378,7 @@ const MediaUploader = ({ propiedadId }) => {
                   <p className="text-gray-600">Vista previa no disponible</p>
                 </div>
               )}
-              
+
               <div className="mt-4 text-center">
                 <h3 className="font-medium text-gray-900">
                   {previewModal.titulo || `Media ${previewModal.id}`}

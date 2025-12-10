@@ -95,7 +95,12 @@ type Props = {
   onDelete: (p: Propiedad) => void;
 };
 
-const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }) => {
+const PropiedadesList: React.FC<Props> = ({
+  onEdit,
+  onView,
+  onCreate,
+  onDelete,
+}) => {
   const {
     propiedades,
     filtros,
@@ -134,7 +139,11 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
   };
 
   const handleLocalDelete = async (propiedad: Propiedad) => {
-    if (window.confirm(`¿Está seguro de eliminar la propiedad "${propiedad.codigo}"?`)) {
+    if (
+      window.confirm(
+        `¿Está seguro de eliminar la propiedad "${propiedad.codigo}"?`
+      )
+    ) {
       try {
         await deletePropiedad(propiedad.id);
         toast.success("Propiedad eliminada exitosamente");
@@ -184,7 +193,8 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
       const openIdMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
       if (openIdMatch && !fileId) fileId = openIdMatch[1];
 
-      if (fileId) return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+      if (fileId)
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
     }
     return url;
   };
@@ -194,14 +204,24 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
     const principalMedia = medias.find((m) => m.esPrincipal) ?? medias[0];
 
     // Si la URL es externa (YouTube, Google Drive, etc.), usar directamente
-    if (principalMedia.url.startsWith("http://") || principalMedia.url.startsWith("https://")) {
+    if (
+      principalMedia.url.startsWith("http://") ||
+      principalMedia.url.startsWith("https://")
+    ) {
       return convertGoogleDriveUrl(principalMedia.url);
     }
 
-    const base = (import.meta as any)?.env?.VITE_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5174";
+    const base =
+      (import.meta as any)?.env?.VITE_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "http://inmobiliaria-full-stack-demo.vercel.app";
 
     // Si la media tiene ID y es una imagen almacenada en la BD, usar el endpoint /api/media/{id}/image
-    if (principalMedia.id && (principalMedia.tipo === "image" || principalMedia.tipoArchivo?.match(/^(jpg|jpeg|png|gif|webp|bmp)$/i))) {
+    if (
+      principalMedia.id &&
+      (principalMedia.tipo === "image" ||
+        principalMedia.tipoArchivo?.match(/^(jpg|jpeg|png|gif|webp|bmp)$/i))
+    ) {
       return `${base}/api/media/${principalMedia.id}/image`;
     }
 
@@ -256,10 +276,14 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Operación</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Operación
+                </label>
                 <select
                   value={String(filtros.operacion ?? "")}
-                  onChange={(e) => handleFilterChange("operacion", e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange("operacion", e.target.value)
+                  }
                   className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="">Todas</option>
@@ -269,7 +293,9 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo
+                </label>
                 <select
                   value={String(filtros.tipo ?? "")}
                   onChange={(e) => handleFilterChange("tipo", e.target.value)}
@@ -285,7 +311,9 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Estado
+                </label>
                 <select
                   value={String(filtros.estado ?? "")}
                   onChange={(e) => handleFilterChange("estado", e.target.value)}
@@ -300,7 +328,9 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Barrio</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Barrio
+                </label>
                 <input
                   type="text"
                   value={String(filtros.barrio ?? "")}
@@ -360,12 +390,19 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
                           src={imgUrl}
                           alt={propiedad.titulo || propiedad.codigo}
                           className="w-full h-full object-cover"
-                          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                          onError={(
+                            e: React.SyntheticEvent<HTMLImageElement>
+                          ) => {
                             const el = e.currentTarget;
                             const originalUrl = imgUrl;
                             // fallback a uc?export=view cuando es thumbnail de Drive
-                            if (originalUrl.includes("thumbnail") && originalUrl.includes("drive.google.com")) {
-                              const fileIdMatch = originalUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                            if (
+                              originalUrl.includes("thumbnail") &&
+                              originalUrl.includes("drive.google.com")
+                            ) {
+                              const fileIdMatch = originalUrl.match(
+                                /[?&]id=([a-zA-Z0-9_-]+)/
+                              );
                               if (fileIdMatch) {
                                 el.src = `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
                                 return;
@@ -375,7 +412,8 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
                             console.error("Error al cargar imagen:", el.src);
                             // placeholder
                             el.style.display = "none";
-                            el.parentElement && ((el.parentElement as any).innerHTML = `
+                            el.parentElement &&
+                              ((el.parentElement as any).innerHTML = `
                               <div class="w-full h-full flex items-center justify-center bg-gray-200">
                                 <div class="text-center">
                                   <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -391,7 +429,9 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
                         <div className="w-full h-full flex items-center justify-center bg-gray-200">
                           <div className="text-center">
                             <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-                            <p className="mt-2 text-sm text-gray-500">Sin imagen</p>
+                            <p className="mt-2 text-sm text-gray-500">
+                              Sin imagen
+                            </p>
                           </div>
                         </div>
                       )}
@@ -403,7 +443,10 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
                             <h3 className="text-lg font-semibold text-gray-900">
-                              {propiedad.titulo || `${propiedad.tipo ?? ""} en ${propiedad.barrio ?? ""}`}
+                              {propiedad.titulo ||
+                                `${propiedad.tipo ?? ""} en ${
+                                  propiedad.barrio ?? ""
+                                }`}
                             </h3>
                             <span
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoColor(
@@ -419,7 +462,9 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
                             )}
                           </div>
 
-                          <p className="text-sm text-gray-600 mb-1">Código: {propiedad.codigo}</p>
+                          <p className="text-sm text-gray-600 mb-1">
+                            Código: {propiedad.codigo}
+                          </p>
 
                           <div className="flex items-center text-sm text-gray-600 mb-2">
                             <MapPinIcon className="h-4 w-4 mr-1" />
@@ -431,27 +476,44 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
                               <HomeIcon className="h-4 w-4 mr-1" />
                               {propiedad.ambientes} amb
                             </div>
-                            {propiedad.dormitorios ? <div>🛏️ {propiedad.dormitorios} dorm</div> : null}
-                            {propiedad.banos ? <div>🚿 {propiedad.banos} baños</div> : null}
-                            {propiedad.metrosCubiertos ? <div>📐 {propiedad.metrosCubiertos} m²</div> : null}
+                            {propiedad.dormitorios ? (
+                              <div>🛏️ {propiedad.dormitorios} dorm</div>
+                            ) : null}
+                            {propiedad.banos ? (
+                              <div>🚿 {propiedad.banos} baños</div>
+                            ) : null}
+                            {propiedad.metrosCubiertos ? (
+                              <div>📐 {propiedad.metrosCubiertos} m²</div>
+                            ) : null}
                           </div>
 
                           <div className="flex items-center space-x-4 mb-3">
                             <div className="flex items-center text-lg font-bold text-green-600">
                               <CurrencyDollarIcon className="h-5 w-5 mr-1" />
-                              {formatPrice(propiedad.precio, propiedad.moneda || "USD")}
+                              {formatPrice(
+                                propiedad.precio,
+                                propiedad.moneda || "USD"
+                              )}
                             </div>
-                            <span className="text-sm text-gray-500 capitalize">{propiedad.operacion}</span>
+                            <span className="text-sm text-gray-500 capitalize">
+                              {propiedad.operacion}
+                            </span>
                             {typeof propiedad.expensas === "number" && (
                               <span className="text-sm text-gray-500">
-                                + {formatPrice(propiedad.expensas, propiedad.moneda || "USD")} exp.
+                                +{" "}
+                                {formatPrice(
+                                  propiedad.expensas,
+                                  propiedad.moneda || "USD"
+                                )}{" "}
+                                exp.
                               </span>
                             )}
                           </div>
 
                           <div className="flex items-center text-xs text-gray-500">
                             <CalendarIcon className="h-4 w-4 mr-1" />
-                            Publicado: {formatDate(propiedad.fechaPublicacionUtc)}
+                            Publicado:{" "}
+                            {formatDate(propiedad.fechaPublicacionUtc)}
                           </div>
                         </div>
 
@@ -495,7 +557,9 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
                       </div>
 
                       {propiedad.descripcion ? (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{propiedad.descripcion}</p>
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          {propiedad.descripcion}
+                        </p>
                       ) : null}
 
                       <div className="flex flex-wrap gap-2">
@@ -525,7 +589,9 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
             <div className="text-center py-8">
               <HomeIcon className="h-12 w-12 mx-auto text-gray-400" />
               <p className="mt-2 text-sm text-gray-500">
-                {loading ? "Cargando propiedades..." : "No hay propiedades disponibles"}
+                {loading
+                  ? "Cargando propiedades..."
+                  : "No hay propiedades disponibles"}
               </p>
               {!loading && hasPermission("manage_propiedades") && (
                 <button
@@ -572,9 +638,14 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
                   </span>{" "}
                   -{" "}
                   <span className="font-medium">
-                    {Math.min(paginacion.currentPage * paginacion.pageSize, paginacion.totalCount)}
+                    {Math.min(
+                      paginacion.currentPage * paginacion.pageSize,
+                      paginacion.totalCount
+                    )}
                   </span>{" "}
-                  de <span className="font-medium">{paginacion.totalCount}</span> resultados
+                  de{" "}
+                  <span className="font-medium">{paginacion.totalCount}</span>{" "}
+                  resultados
                 </p>
               </div>
 
@@ -589,22 +660,26 @@ const PropiedadesList: React.FC<Props> = ({ onEdit, onView, onCreate, onDelete }
                     <ChevronLeftIcon className="h-5 w-5" />
                   </button>
 
-                  {[...Array(Math.min(5, paginacion.totalPages))].map((_, i) => {
-                    const pageNumber = i + 1;
-                    const isActive = pageNumber === paginacion.currentPage;
-                    return (
-                      <button
-                        key={pageNumber}
-                        onClick={() => handlePageChange(pageNumber)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          isActive ? "z-10 bg-blue-50 border-blue-500 text-blue-600" : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                        }`}
-                        type="button"
-                      >
-                        {pageNumber}
-                      </button>
-                    );
-                  })}
+                  {[...Array(Math.min(5, paginacion.totalPages))].map(
+                    (_, i) => {
+                      const pageNumber = i + 1;
+                      const isActive = pageNumber === paginacion.currentPage;
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => handlePageChange(pageNumber)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            isActive
+                              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                              : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                          }`}
+                          type="button"
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    }
+                  )}
 
                   <button
                     onClick={() => handlePageChange(paginacion.currentPage + 1)}

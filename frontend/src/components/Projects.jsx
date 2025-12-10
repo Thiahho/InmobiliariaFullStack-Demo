@@ -19,7 +19,7 @@ const Projects = () => {
         setLoading(true);
         // Buscar solo propiedades destacadas usando búsqueda avanzada
         const response = await fetch(
-          "http://localhost:5174/api/propiedades/buscar-avanzada",
+          "http://inmobiliaria-full-stack-demo.vercel.app/api/propiedades/buscar-avanzada",
           {
             method: "POST",
             headers: {
@@ -48,7 +48,9 @@ const Projects = () => {
         setError(err.message);
         // Fallback: intentar con el endpoint simple y filtrar localmente
         try {
-          const response = await fetch("http://localhost:5174/api/propiedades");
+          const response = await fetch(
+            "http://inmobiliaria-full-stack-demo.vercel.app/api/propiedades"
+          );
           if (response.ok) {
             const allData = await response.json();
             const featuredData = allData.filter(
@@ -205,20 +207,25 @@ const Projects = () => {
                     src={(() => {
                       if (project.medias && project.medias.length > 0) {
                         // Buscar la imagen principal o la primera disponible
-                        const media = project.medias.find((m) => m.esPrincipal) || project.medias[0];
+                        const media =
+                          project.medias.find((m) => m.esPrincipal) ||
+                          project.medias[0];
 
                         // Si la URL es externa (YouTube, Google Drive, etc.), usar directamente
-                        if (media.url.startsWith("http://") || media.url.startsWith("https://")) {
+                        if (
+                          media.url.startsWith("http://") ||
+                          media.url.startsWith("https://")
+                        ) {
                           return media.url;
                         }
 
                         // Si es una imagen almacenada en la BD, usar el endpoint /api/media/{id}/image
                         if (media.id) {
-                          return `http://localhost:5174/api/media/${media.id}/image`;
+                          return `http://inmobiliaria-full-stack-demo.vercel.app/api/media/${media.id}/image`;
                         }
 
                         // Fallback a la URL relativa (por compatibilidad)
-                        return `http://localhost:5174${media.url}`;
+                        return `http://inmobiliaria-full-stack-demo.vercel.app${media.url}`;
                       }
                       return "/image.png";
                     })()}

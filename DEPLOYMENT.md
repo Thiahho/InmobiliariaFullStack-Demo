@@ -27,6 +27,7 @@
 ### 1.1 Verificar Archivos de Configuración
 
 **Frontend - `.env.example`:**
+
 ```bash
 cd frontend
 cp .env.example .env.local
@@ -34,6 +35,7 @@ cp .env.example .env.local
 ```
 
 **Backend - Generar JWT Secret:**
+
 ```bash
 # En PowerShell/CMD, genera un secret aleatorio de 64 caracteres
 # Opción 1: Usar un generador online: https://generate-secret.vercel.app/64
@@ -44,6 +46,7 @@ cp .env.example .env.local
 ### 1.2 Probar Localmente
 
 **Frontend:**
+
 ```bash
 cd frontend
 npm install
@@ -52,6 +55,7 @@ npm start
 ```
 
 **Backend:**
+
 ```bash
 cd LandingBack
 dotnet restore
@@ -60,8 +64,9 @@ dotnet run
 ```
 
 Verifica que todo funcione en:
+
 - Frontend: http://localhost:3000
-- Backend: http://localhost:5174/swagger
+- Backend: http://inmobiliaria-full-stack-demo.vercel.app/swagger
 
 ---
 
@@ -83,6 +88,7 @@ git push -u origin main
 ```
 
 **IMPORTANTE:** Revisa que no se hayan subido secretos:
+
 ```bash
 git log --all --full-history -- "*appsettings.Development.json"
 git log --all --full-history -- "*.env.local"
@@ -141,22 +147,24 @@ git checkout appsettings.json
 2. Conecta tu repositorio de GitHub
 3. Configuración:
 
-| Campo | Valor |
-|-------|-------|
-| **Name** | `inmobiliaria-backend` |
-| **Region** | Same as database |
-| **Branch** | `main` |
-| **Root Directory** | (dejar vacío) |
-| **Runtime** | `Docker` o `.NET` |
-| **Build Command** | Ver abajo |
-| **Start Command** | Ver abajo |
+| Campo              | Valor                  |
+| ------------------ | ---------------------- |
+| **Name**           | `inmobiliaria-backend` |
+| **Region**         | Same as database       |
+| **Branch**         | `main`                 |
+| **Root Directory** | (dejar vacío)          |
+| **Runtime**        | `Docker` o `.NET`      |
+| **Build Command**  | Ver abajo              |
+| **Start Command**  | Ver abajo              |
 
 **Build Command:**
+
 ```bash
 cd LandingBack && dotnet restore && dotnet publish -c Release -o out
 ```
 
 **Start Command:**
+
 ```bash
 cd LandingBack/out && ./LandingBack --urls "http://0.0.0.0:$PORT"
 ```
@@ -202,15 +210,15 @@ Y en Render → **Environment** → Agrega la variable.
 **O actualiza el código directamente** (recomendado):
 
 Edita `appsettings.Production.json`:
+
 ```json
 {
-  "AllowedOrigins": [
-    "https://tu-app.vercel.app"
-  ]
+  "AllowedOrigins": ["https://tu-app.vercel.app"]
 }
 ```
 
 Commit y push:
+
 ```bash
 git add LandingBack/appsettings.Production.json
 git commit -m "Add Vercel URL to CORS"
@@ -222,6 +230,7 @@ git push
 Click **"Create Web Service"** → Espera 5-10 minutos
 
 **Verifica el deployment:**
+
 - URL: `https://inmobiliaria-backend.onrender.com`
 - Health check: `https://inmobiliaria-backend.onrender.com/health`
 - Swagger: `https://inmobiliaria-backend.onrender.com/swagger` (debería estar deshabilitado en producción)
@@ -239,13 +248,13 @@ Click **"Create Web Service"** → Espera 5-10 minutos
 3. **Import Git Repository** → Selecciona tu repo
 4. Configuración:
 
-| Campo | Valor |
-|-------|-------|
+| Campo                | Valor                                 |
+| -------------------- | ------------------------------------- |
 | **Framework Preset** | `Next.js` (detectado automáticamente) |
-| **Root Directory** | `frontend` |
-| **Build Command** | `npm run build` (default) |
-| **Output Directory** | `.next` (default) |
-| **Install Command** | `npm install` (default) |
+| **Root Directory**   | `frontend`                            |
+| **Build Command**    | `npm run build` (default)             |
+| **Output Directory** | `.next` (default)                     |
+| **Install Command**  | `npm install` (default)               |
 
 ### 5.2 Variables de Entorno
 
@@ -282,15 +291,15 @@ Ahora que tienes la URL de Vercel, actualiza el backend:
 ### Opción B: Via Código (Recomendado)
 
 1. Edita `LandingBack/appsettings.Production.json`:
+
    ```json
    {
-     "AllowedOrigins": [
-       "https://tu-app-exacta.vercel.app"
-     ]
+     "AllowedOrigins": ["https://tu-app-exacta.vercel.app"]
    }
    ```
 
 2. Commit y push:
+
    ```bash
    git add LandingBack/appsettings.Production.json
    git commit -m "Update CORS with Vercel URL"
@@ -316,16 +325,19 @@ Ahora que tienes la URL de Vercel, actualiza el backend:
 ### 7.2 Verificar CORS
 
 Abre la consola del navegador (F12) en tu app de Vercel:
+
 - **Sin errores CORS:** ✅ Todo bien
 - **Error CORS:** ⚠️ Verifica que la URL de Vercel esté exactamente en `AllowedOrigins`
 
 ### 7.3 Monitorear Logs
 
 **Render:**
+
 - Dashboard → Tu servicio → **"Logs"** tab
 - Busca errores durante startup
 
 **Vercel:**
+
 - Dashboard → Tu proyecto → **"Deployments"** → Click en deployment → **"Logs"**
 
 ---
@@ -335,11 +347,13 @@ Abre la consola del navegador (F12) en tu app de Vercel:
 ### Problema: CORS Error
 
 **Error en consola:**
+
 ```
 Access to fetch at 'https://backend.onrender.com/api/...' from origin 'https://app.vercel.app' has been blocked by CORS policy
 ```
 
 **Solución:**
+
 1. Verifica que `AllowedOrigins__0` esté en Render Environment
 2. Verifica que la URL sea EXACTA (con https://, sin trailing slash)
 3. Re-deploya el backend
@@ -347,11 +361,13 @@ Access to fetch at 'https://backend.onrender.com/api/...' from origin 'https://a
 ### Problema: Database Connection Failed
 
 **Error en logs:**
+
 ```
 Npgsql.NpgsqlException: connection refused
 ```
 
 **Solución:**
+
 1. Verifica que `ConnectionStrings__DefaultConnection` use la **Internal Database URL**
 2. Verifica que el formato sea: `Host=XXX;Database=YYY;Username=ZZZ;Password=AAA;Port=5432`
 3. No uses la External URL (es para conexiones externas)
@@ -359,11 +375,13 @@ Npgsql.NpgsqlException: connection refused
 ### Problema: JWT Token Invalid
 
 **Error en frontend:**
+
 ```
 401 Unauthorized
 ```
 
 **Solución:**
+
 1. Verifica que `Jwt__Key` tenga al menos 32 caracteres
 2. Verifica que `Jwt__Issuer` y `Jwt__Audience` coincidan
 3. Limpia localStorage del navegador: `localStorage.clear()`
@@ -373,6 +391,7 @@ Npgsql.NpgsqlException: connection refused
 **Síntoma:** Uploads funcionan pero se pierden después del re-deploy
 
 **Solución:**
+
 - Render usa filesystem efímero
 - Necesitas integrar Cloudinary, AWS S3, o usar Render Disks (de pago)
 - Ver sección siguiente ⬇️
@@ -407,6 +426,7 @@ En Render, el filesystem se borra con cada deploy. Para persistir imágenes nece
 ## 🔄 Workflow de Desarrollo
 
 ### Desarrollo Local
+
 ```bash
 # Frontend
 cd frontend
@@ -418,6 +438,7 @@ dotnet watch run
 ```
 
 ### Deploy a Producción
+
 ```bash
 git add .
 git commit -m "Nueva feature: descripción"
@@ -441,6 +462,7 @@ git push
 ## 🆘 Soporte
 
 Si tienes problemas:
+
 1. Revisa los logs en Render y Vercel
 2. Verifica las variables de entorno
 3. Asegúrate de que las URLs no tengan trailing slashes

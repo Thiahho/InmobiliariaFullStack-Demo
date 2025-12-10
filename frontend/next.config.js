@@ -22,7 +22,8 @@ const nextConfig = {
   },
   env: {
     NEXT_PUBLIC_API_URL:
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5174/api",
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://inmobiliaria-full-stack-demo.vercel.app/api",
     NEXT_PUBLIC_BASE_URL:
       process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
   },

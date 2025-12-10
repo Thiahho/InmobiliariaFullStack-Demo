@@ -152,10 +152,14 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
     const base =
       (import.meta as any)?.env?.VITE_API_BASE_URL ||
       process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "http://localhost:5174";
+      "http://inmobiliaria-full-stack-demo.vercel.app";
 
     // Si la media tiene ID y es una imagen almacenada en la BD, usar el endpoint /api/media/{id}/image
-    if (media.id && (media.tipo === "image" || media.tipoArchivo?.match(/^(jpg|jpeg|png|gif|webp|bmp)$/i))) {
+    if (
+      media.id &&
+      (media.tipo === "image" ||
+        media.tipoArchivo?.match(/^(jpg|jpeg|png|gif|webp|bmp)$/i))
+    ) {
       return `${base}/api/media/${media.id}/image`;
     }
 
@@ -640,14 +644,23 @@ const PropiedadDetail: React.FC<Props> = ({ propiedadId, onClose }) => {
                   onClick={() => {
                     const phoneNumber = "+541122692061"; // Reemplazar con tu número de WhatsApp
                     const propertyInfo = `Hola! Me interesa la propiedad:
-${propiedadActual.titulo || `${propiedadActual.tipo} en ${propiedadActual.barrio}`}
-📍 ${propiedadActual.direccion}${propiedadActual.barrio ? `, ${propiedadActual.barrio}` : ''}
+${
+  propiedadActual.titulo ||
+  `${propiedadActual.tipo} en ${propiedadActual.barrio}`
+}
+📍 ${propiedadActual.direccion}${
+                      propiedadActual.barrio
+                        ? `, ${propiedadActual.barrio}`
+                        : ""
+                    }
 💰 ${formatPrice(propiedadActual.precio, propiedadActual.moneda || "USD")}
 🏠 ${propiedadActual.ambientes} ambientes
 📋 Código: ${propiedadActual.codigo}`;
 
-                    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(propertyInfo)}`;
-                    window.open(whatsappUrl, '_blank');
+                    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
+                      propertyInfo
+                    )}`;
+                    window.open(whatsappUrl, "_blank");
                   }}
                   className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                   type="button"

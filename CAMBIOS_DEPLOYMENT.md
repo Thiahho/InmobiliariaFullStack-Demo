@@ -11,11 +11,13 @@ Este documento resume los cambios realizados para preparar el proyecto para depl
 ### 1. **LandingBack/Program.cs**
 
 **Cambios:**
+
 - ✅ CORS ahora lee orígenes permitidos desde configuración (variable de entorno `AllowedOrigins`)
 - ✅ Validación obligatoria de JWT Key (previene errores de configuración)
 - ✅ Valores por defecto para Issuer y Audience
 
 **Antes:**
+
 ```csharp
 .WithOrigins(
     "http://localhost:3000",
@@ -25,6 +27,7 @@ Este documento resume los cambios realizados para preparar el proyecto para depl
 ```
 
 **Después:**
+
 ```csharp
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? new[] { "http://localhost:3000" };
@@ -39,9 +42,11 @@ corsBuilder.WithOrigins(allowedOrigins)
 ### 2. **LandingBack/appsettings.json**
 
 **Cambios:**
+
 - ✅ Agregada sección `AllowedOrigins` con localhost por defecto
 
 **Nuevo contenido:**
+
 ```json
 "AllowedOrigins": [
   "http://localhost:3000",
@@ -60,11 +65,13 @@ corsBuilder.WithOrigins(allowedOrigins)
 ### 3. **.gitignore**
 
 **Cambios:**
+
 - ✅ Protección de archivos sensibles (.env, logs, uploads)
 - ✅ Exclusión de archivos de build (.dll, .exe, bin, obj)
 - ✅ Exclusión de appsettings.Development.json (con secretos de dev)
 
 **Agregados importantes:**
+
 ```
 # Environment Variables
 .env
@@ -87,11 +94,13 @@ corsBuilder.WithOrigins(allowedOrigins)
 **Propósito:** Configuración para producción SIN secretos expuestos
 
 **Características:**
+
 - Todos los valores sensibles están vacíos (se llenarán con variables de entorno)
 - Logging ajustado a nivel "Warning" (menos verbose)
 - Solo escribe logs a Console (no a archivos, ya que Render es efímero)
 
 **Uso en Render:**
+
 ```bash
 # En Environment Variables de Render
 ConnectionStrings__DefaultConnection=postgresql://...
@@ -107,12 +116,14 @@ Email__FromAddress=tu-email@gmail.com
 **Propósito:** Template para variables de entorno del frontend
 
 **Contenido:**
+
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:5174/api
+NEXT_PUBLIC_API_URL=http://inmobiliaria-full-stack-demo.vercel.app/api
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ```
 
 **Uso:**
+
 1. Local: `cp .env.example .env.local`
 2. Vercel: Copiar valores a Environment Variables
 
@@ -123,8 +134,9 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 **Propósito:** Variables de entorno para desarrollo local
 
 **Contenido:**
+
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:5174/api
+NEXT_PUBLIC_API_URL=http://inmobiliaria-full-stack-demo.vercel.app/api
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ```
 
@@ -137,6 +149,7 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 **Propósito:** Guía completa paso a paso para deployment
 
 **Incluye:**
+
 - ✅ Preparación del proyecto
 - ✅ Configuración de PostgreSQL en Render
 - ✅ Deployment del backend en Render
@@ -146,6 +159,7 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 - ✅ Setup opcional de Cloudinary
 
 **Secciones principales:**
+
 1. Requisitos previos
 2. Preparar el proyecto
 3. Subir a GitHub
@@ -233,6 +247,7 @@ git push -u origin main
 ### 4. Seguir DEPLOYMENT.md
 
 Una vez en GitHub, sigue paso a paso el archivo `DEPLOYMENT.md` para deployar a:
+
 - **Render:** Backend + PostgreSQL
 - **Vercel:** Frontend
 
@@ -243,24 +258,28 @@ Una vez en GitHub, sigue paso a paso el archivo `DEPLOYMENT.md` para deployar a:
 Antes de deployar, verifica:
 
 ### Backend
+
 - [ ] `Program.cs` actualizado con CORS dinámico
 - [ ] `appsettings.Production.json` creado (sin secretos)
 - [ ] Variables de entorno documentadas
 - [ ] Migraciones probadas localmente
 
 ### Frontend
+
 - [ ] `.env.example` creado
 - [ ] `.env.local` creado (no se sube a GitHub)
 - [ ] Build funciona: `npm run build`
 - [ ] Axios configurado con `NEXT_PUBLIC_API_URL`
 
 ### Seguridad
+
 - [ ] `.gitignore` actualizado
 - [ ] JWT Secret generado (64+ caracteres)
 - [ ] Gmail App Password generado
 - [ ] Sin secretos en código fuente
 
 ### GitHub
+
 - [ ] Repositorio creado
 - [ ] Código subido
 - [ ] Sin archivos sensibles en el repo
@@ -291,6 +310,7 @@ Antes de deployar, verifica:
 ## 📞 Contacto
 
 Si tienes dudas durante el deployment:
+
 1. Revisa `DEPLOYMENT.md` sección Troubleshooting
 2. Verifica logs en Render y Vercel
 3. Verifica que las URLs no tengan trailing slashes
@@ -299,16 +319,16 @@ Si tienes dudas durante el deployment:
 
 ## ✅ Resumen de Archivos
 
-| Archivo | Estado | Descripción |
-|---------|--------|-------------|
-| `LandingBack/Program.cs` | ✏️ Modificado | CORS dinámico y validación JWT |
-| `LandingBack/appsettings.json` | ✏️ Modificado | Agregado AllowedOrigins |
-| `LandingBack/appsettings.Production.json` | ✨ Nuevo | Config producción sin secretos |
-| `.gitignore` | ✏️ Modificado | Protección de archivos sensibles |
-| `frontend/.env.example` | ✨ Nuevo | Template de variables de entorno |
-| `frontend/.env.local` | ✨ Nuevo | Variables para desarrollo local |
-| `DEPLOYMENT.md` | ✨ Nuevo | Guía completa de deployment |
-| `CAMBIOS_DEPLOYMENT.md` | ✨ Nuevo | Este archivo |
+| Archivo                                   | Estado        | Descripción                      |
+| ----------------------------------------- | ------------- | -------------------------------- |
+| `LandingBack/Program.cs`                  | ✏️ Modificado | CORS dinámico y validación JWT   |
+| `LandingBack/appsettings.json`            | ✏️ Modificado | Agregado AllowedOrigins          |
+| `LandingBack/appsettings.Production.json` | ✨ Nuevo      | Config producción sin secretos   |
+| `.gitignore`                              | ✏️ Modificado | Protección de archivos sensibles |
+| `frontend/.env.example`                   | ✨ Nuevo      | Template de variables de entorno |
+| `frontend/.env.local`                     | ✨ Nuevo      | Variables para desarrollo local  |
+| `DEPLOYMENT.md`                           | ✨ Nuevo      | Guía completa de deployment      |
+| `CAMBIOS_DEPLOYMENT.md`                   | ✨ Nuevo      | Este archivo                     |
 
 ---
 
